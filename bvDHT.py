@@ -59,18 +59,19 @@ elif len(sys.argv) == 3:
     peerConn = socket(AF_INET, SOCK_STREAM)
     peerConn.connect( (peerIP, peerPort) )
 
+    send the client we connected to our connection protocol
+    peerConn.send("CON".encode())
+    peerAddress = getLocalIPAddress() + ":" + str(port)
+    sendAddress(peerConn, peerAddress)
+
     userInput = input("Command?")
-    while input != "disconnect":
+    while userInput != "disconnect":
         print("Running")
 
         userInput = input("Command?")
 else:
     print("What you doing?")
 
-#   #send the client we connected to our connection protocol
-#   peerConn.send("CON".encode())
-#   peerAddress = net_functions.getLocalIPAddress() + ":" + str(port)
-#   peerConn.hash_functions.sendAddress(peerConn, peerAddress)
 
 
 
