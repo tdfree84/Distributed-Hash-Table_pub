@@ -4,16 +4,16 @@ import sys
 import os
 import time
 import threading
-import net_functions
-import hash_functions
+from net_functions import *
+from hash_functions import *
 
 def handlePeer(peerInfo):
     #handle a new client that connects
     print("I have connected with someone.")
     peerConn, peerAddr = peerInfo
-    conMsg = peerConn.hash_functions.recvAll(peerConn, 3)
+    conMsg = recvAll(peerConn, 3)
     print(conMsg)
-    peerIP, peerPort = peerConn.recvAddress(peerConn)
+    peerIP, peerPort = recvAddress(peerConn)
     print(peerIP + ":" + peerPort)
     #fingerTable = {}
     #keySpaceRanges = 2**160/5
@@ -29,7 +29,7 @@ listener.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 listener.bind(('', 0))
 listener.listen(32)
 port = listener.getsockname()[1]
-print("I am: " + net_functions.getLocalIPAddress() + ":" + str(port))
+print("I am: " + getLocalIPAddress() + ":" + str(port))
 
 running = True
 
