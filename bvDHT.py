@@ -25,7 +25,7 @@ if len(sys.argv) == 1:
     threading.Thread(target=handlePeer, args = (listener,), daemon=True).start()
     print("This is a the seed client")
     #this will be for the initial person connecting
-else if len(sys.argv) == 3:
+elif len(sys.argv) == 3:
     #this is for any peer trying to connect to another peer
     print("This is a peer connecting")
     peerIP = sys.argv[1]
@@ -33,6 +33,8 @@ else if len(sys.argv) == 3:
 
     peerConn = socket(AF_INET, SOCK_STREAM)
     peerConn.connect( (peerIP, peerPort) )
+else:
+    print("What you doing?")
 
 
 
