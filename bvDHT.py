@@ -21,7 +21,7 @@ listener.listen(32)
 
 if len(sys.argv) == 1:
     fingerTable = {}
-    int keySpaceRanges = 2**160/5
+    keySpaceRanges = 2**160/5
     threading.Thread(target=handlePeer, args = (listener,), daemon=True).start()
     print("This is a the seed client")
     #this will be for the initial person connecting
