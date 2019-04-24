@@ -39,6 +39,13 @@ if len(sys.argv) == 1:
     #set up our own thread to start listening for clients
     threading.Thread(target=waitForPeerConnections, args = (listener,), daemon=True).start()
 
+    userInput = input("Command?")
+    while userInput != "disconnect":
+        print("Running")
+
+        userInput = input("Command?")
+    
+
     print("This is a the seed client")
     #this will be for the initial person connecting
 elif len(sys.argv) == 3:
@@ -51,6 +58,12 @@ elif len(sys.argv) == 3:
     peerPort = int(sys.argv[2])
     peerConn = socket(AF_INET, SOCK_STREAM)
     peerConn.connect( (peerIP, peerPort) )
+
+    userInput = input("Command?")
+    while input != "disconnect":
+        print("Running")
+
+        userInput = input("Command?")
 else:
     print("What you doing?")
 
