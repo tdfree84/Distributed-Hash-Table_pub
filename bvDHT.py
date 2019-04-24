@@ -8,6 +8,8 @@ import threading
 def handlePeer(listener):
     while running:
         #handle a new client that connects
+        fingerTable = {}
+        keySpaceRanges = 2**160/5
         peerInfo = listener.accept()
         peerConn, peerAddr = peerInfo
 
@@ -17,11 +19,11 @@ listener.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 listener.bind(('', port))
 listener.listen(32)
 
-#set up our own thread to start listening for clients
 
 if len(sys.argv) == 1:
     fingerTable = {}
-    int keySpaceRanges = 2**160/5
+    keySpaceRanges = 2**160/5
+    #set up our own thread to start listening for clients
     threading.Thread(target=handlePeer, args = (listener,), daemon=True).start()
     print("This is a the seed client")
     #this will be for the initial person connecting
@@ -33,6 +35,8 @@ else if len(sys.argv) == 3:
 
     peerConn = socket(AF_INET, SOCK_STREAM)
     peerConn.connect( (peerIP, peerPort) )
+    #set up our own thread to start listening for clients
+    threading.Thread(target=handlePeer, args = (listener,), daemon=True).start()
 
 
 
