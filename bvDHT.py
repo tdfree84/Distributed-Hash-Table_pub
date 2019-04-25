@@ -14,6 +14,28 @@ from peerProfile import *
 menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\n"
 
 
+####################
+# Helper functions #
+####################
+
+def owns(number):
+    ''' Find the closest person to the hash number requested. '''
+
+    if number >= myProfile.minHash and number <= myProfile.maxHash:
+        return myProfile.myAddress
+    else:
+        # Find the closest person we know to that number
+        minDist = [0,2**160+1]
+        for key in myProfile.fingerTable:
+            if abs(myProfile.fingerTable[key] - number) < minDist[1]:
+                minDist[0] = key
+                minDist[1] = abs(myProfile.fingerTable[key] - number)
+        return minDist[0] # Return their ip port
+    
+
+#################
+# Peer handling #
+#################
 
 def handlePeer(peerInfo):
     ''' handlePeer receives commands from a client sending requests. '''
@@ -31,6 +53,7 @@ def handlePeer(peerInfo):
 
         #send the address of our successor
         #call owns on our max range +1 to find them
+        ''' owns(this.maxHash+1) '''
 
         #send the number of items from their hash
         #to the hash of the successor-1
@@ -69,7 +92,9 @@ keySpaceRanges = 2**160/5
 #get random number in keyRange for offset
 randKeyRange = random.randint(0, keySpaceRanges)
 #all the keyspace we own
-myKeySpaceRange = []
+myKeySpaceRange = [0,0]
+# THIS client's profile
+myProfile = ''
 
 # Seed client is len == 1
 if len(sys.argv) == 1:
@@ -77,11 +102,16 @@ if len(sys.argv) == 1:
     threading.Thread(target=waitForPeerConnections, args = (listener,), daemon=True).start()
     addr = getLocalIPAddress() + ":" + str(port)
     fingerTable[addr] = 2**160
-    myKeySpaceRange.append(0)
-    myKeySpaceRange.append(2**160)
 
     print(menu)
-    userInput = input("Command?\n")
+    print("My finger table is",fingerTable)
+    myKeySpaceRange[0] = 0
+    myKeySpaceRange[1] = 2**160
+
+    # Initializing my peer profile
+    myProfile = PeerProfile(addr,myKeySpaceRange[0],myKeySpaceRange[1],fingerTable,addr,addr)
+
+    userInput = input("Command?")
     while userInput != "disconnect":
         print("Running")
         print(menu)
