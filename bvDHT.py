@@ -14,7 +14,7 @@ def handlePeer(peerInfo):
     conMsg = recvAll(peerConn, 3)
     print(conMsg)
     peerIP, peerPort = recvAddress(peerConn)
-    print(peerIP + ":" + peerPort)
+    print(peerIP + ":" + str(peerPort))
     #fingerTable = {}
     #keySpaceRanges = 2**160/5
 
