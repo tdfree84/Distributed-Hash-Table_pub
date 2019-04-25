@@ -10,6 +10,8 @@ from hash_functions import *
 from peerProfile import *
 
 def handlePeer(peerInfo):
+    ''' handlePeer receives commands from a client sending requests. '''
+
     #handle a new client that connects
     print("I have connected with someone.")
     peerConn, peerAddr = peerInfo
@@ -37,6 +39,8 @@ def handlePeer(peerInfo):
         peerConn.send('N'.encode())
 
 def waitForPeerConnections(listener):
+    ''' waitForPeerConnections listens for other peers to connect to us and spawns off a new thread for each peer that connects. '''
+
     while running:
         peerInfo = listener.accept()
         threading.Thread(target=handlePeer, args = (peerInfo,), daemon=True).start()
@@ -60,6 +64,7 @@ randKeyRange = random.randint(0, keySpaceRanges)
 #all the keyspace we own
 myKeySpaceRange = []
 
+# Seed client is len == 1
 if len(sys.argv) == 1:
     #set up our own thread to start listening for clients
     threading.Thread(target=waitForPeerConnections, args = (listener,), daemon=True).start()
@@ -80,6 +85,8 @@ if len(sys.argv) == 1:
 
     print("This is a the seed client")
     #this will be for the initial person connecting
+
+# Connecting client passes arguments of ip and port
 elif len(sys.argv) == 3:
     #this is for any peer trying to connect to another peer
     #set up our own thread to start listening for clients
