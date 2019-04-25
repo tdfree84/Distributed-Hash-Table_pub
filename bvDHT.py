@@ -9,6 +9,12 @@ from net_functions import *
 from hash_functions import *
 from peerProfile import *
 
+
+
+menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\n"
+
+
+
 def handlePeer(peerInfo):
     ''' handlePeer receives commands from a client sending requests. '''
 
@@ -24,9 +30,10 @@ def handlePeer(peerInfo):
         peerConn.send('T'.encode())
 
         #send the address of our successor
+        #call owns on our max range +1 to find them
 
         #send the number of items from their hash
-        #to the hash of the successor
+        #to the hash of the successor-1
 
         #for number of items, send [key][valSize][val] to peer
 
@@ -68,19 +75,21 @@ myKeySpaceRange = []
 if len(sys.argv) == 1:
     #set up our own thread to start listening for clients
     threading.Thread(target=waitForPeerConnections, args = (listener,), daemon=True).start()
-    addr = getLocalIPAddress() + ":" + port
+    addr = getLocalIPAddress() + ":" + str(port)
     fingerTable[addr] = 2**160
-    myKeySpaceRange[0] = 0
-    myKeySpaceRange[1] = 2**160
+    myKeySpaceRange.append(0)
+    myKeySpaceRange.append(2**160)
 
-    userInput = input("Command?")
+    print(menu)
+    userInput = input("Command?\n")
     while userInput != "disconnect":
         print("Running")
-        print("--MENU--")
+        print(menu)
+
 
         
 
-        userInput = input("Command?")
+        userInput = input("Command?\n")
     
 
     print("This is a the seed client")
@@ -104,13 +113,16 @@ elif len(sys.argv) == 3:
     sendAddress(peerConn, peerAddress)
 
     tf = recvAll(peerConn, 1)
+    if(tf == "T"):
+        print(menu)
+        userInput = input("Command?\n")
+        while userInput != "disconnect":
+            print("Running")
+            print(menu)
 
-    userInput = input("Command?")
-
-    while userInput != "disconnect":
-        print("Running")
-
-        userInput = input("Command?")
+            userInput = input("Command?\n")
+    else:
+        #run owns on our hash
 else:
     print("What you doing?")
 
