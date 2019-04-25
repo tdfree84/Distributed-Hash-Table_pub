@@ -99,10 +99,10 @@ if len(sys.argv) == 1:
     #set up our own thread to start listening for clients
     threading.Thread(target=waitForPeerConnections, args = (listener,), daemon=True).start()
     addr = getLocalIPAddress() + ":" + str(port)
-    fingerTable[addr] = 2**160
+    fingerTable[addr] = getHashIndex((getLocalIPAddress(), int(port)))
     print("My finger table is",fingerTable)
-    myKeySpaceRange[0] = 0
-    myKeySpaceRange[1] = 2**160
+    myKeySpaceRange[0] = getHashIndex((getLocalIPAddress(), int(port))) 
+    myKeySpaceRange[1] = getHashIndex((getLocalIPAddress(), int(port)))-1
 
     # Initializing my peer profile
     myProfile = PeerProfile(addr,myKeySpaceRange[0],myKeySpaceRange[1],fingerTable,addr,addr)
@@ -148,6 +148,7 @@ elif len(sys.argv) == 3:
 
             userInput = input("Command?\n")
     else:
+        pass
         #run owns on our hash
 else:
     print("What you doing?")
