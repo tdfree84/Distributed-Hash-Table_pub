@@ -32,6 +32,9 @@ def owns(number):
 # Peer handling #
 #################
 
+menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\n"
+
+
 def handlePeer(peerInfo):
     ''' handlePeer receives commands from a client sending requests. '''
 
@@ -48,9 +51,10 @@ def handlePeer(peerInfo):
 
         #send the address of our successor
         ''' owns(this.maxHash+1) '''
+        #call owns on our max range +1 to find them
 
         #send the number of items from their hash
-        #to the hash of the successor
+        #to the hash of the successor-1
 
         #for number of items, send [key][valSize][val] to peer
 
@@ -106,11 +110,12 @@ if len(sys.argv) == 1:
     userInput = input("Command?")
     while userInput != "disconnect":
         print("Running")
-        print("--MENU--")
+        print(menu)
+
 
         
 
-        userInput = input("Command?")
+        userInput = input("Command?\n")
     
 
     print("This is a the seed client")
@@ -134,13 +139,16 @@ elif len(sys.argv) == 3:
     sendAddress(peerConn, peerAddress)
 
     tf = recvAll(peerConn, 1)
+    if(tf == "T"):
+        print(menu)
+        userInput = input("Command?\n")
+        while userInput != "disconnect":
+            print("Running")
+            print(menu)
 
-    userInput = input("Command?")
-
-    while userInput != "disconnect":
-        print("Running")
-
-        userInput = input("Command?")
+            userInput = input("Command?\n")
+    else:
+        #run owns on our hash
 else:
     print("What you doing?")
 
