@@ -180,15 +180,25 @@ elif len(sys.argv) == 3:
     tf = tf.decode()
     
     if(tf == "T"):
+       
+        # Gathering info for our profile
+        addr = getLocalIPAddress() + ":" + str(port)
+        # Add ourselves to the finger table
+        fingerTable[getHashIndex((getLocalIPAddress(), int(port)))] = addr 
+        # Add whoever just joined
+        fingerTable[getHashIndex((peerIP, int(peerPort)))] = peerIP +":"+ str(peerPort)
+        
+        # Set our keyspace (THIS IS WRONG AND NEES TO CHANGE)
         ourHash = getHashIndex((getLocalIPAddress(), int(port)))
         myKeySpaceRange[0] = ourHash
         myKeySpaceRange[1] = ourHash-1
-        addr = getLocalIPAddress() + ":" + str(port)
-
+        
+        # Initializing my peer profile
         myProfile = PeerProfile((getLocalIPAddress(),int(port)),myKeySpaceRange[0],myKeySpaceRange[1],fingerTable,addr,addr)
+
         for i in range(5):
             who = owns(randKeyRange)
-            print("Owns: ",who)
+            #print("Owns: ",who)
             who_spl = who.split(':')
             who_tup = (who_spl[0],int(who_spl[1]))
             #fingerTable[getHashIndex(who_tup)] = who
