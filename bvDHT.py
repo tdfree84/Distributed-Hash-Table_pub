@@ -27,7 +27,7 @@ def owns(number):
                 #return myProfile.fingerTable[hashes[i]]
             return myProfile.fingerTable[hashes[i]]
 
-    #return myProfile.fingerTable[hashes[0]]
+    return myProfile.fingerTable[hashes[0]]
 
 #################
 # Peer handling #
@@ -49,6 +49,23 @@ def handlePeer(peerInfo):
         #sending them a T if we own they space they want
         print("T")
         peerConn.send('T'.encode())
+        #update our fingertable
+        fingerTable = {}
+        fingerTable[getHashIndex((peerIP,peerPort))] = str(peerIP + ":" +str(peerPort))
+        fingerTable[getHashIndex(myProfile.myAddress)] = myProfile.myAddrString()
+        for i in range(5):
+            randKeyRange = random.randint(0, keySpaceRanges)
+            who = owns(randKeyRange)
+            print("Owns: ",who)
+            who_spl = who.split(':')
+            who_tup = (who_spl[0],int(who_spl[1]))
+            #fingerTable[getHashIndex(who_tup)] = who
+            fingerTable[randKeyRange] = who
+            randKeyRange += randKeyRange
+
+        myProfile.fingerTable = fingerTable
+        print("My finger table is",myProfile.fingerTable)
+
 
         #send the address of our successor
         #call owns on our max range +1 to find them
@@ -63,6 +80,7 @@ def handlePeer(peerInfo):
 
         #once done, we no longer own that keyspace, so update
         #our keyspace ranges
+
     else:
         #send this if we don't own the space they want
         print("N")
@@ -162,6 +180,24 @@ elif len(sys.argv) == 3:
     tf = tf.decode()
     
     if(tf == "T"):
+        ourHash = getHashIndex((getLocalIPAddress(), int(port)))
+        myKeySpaceRange[0] = ourHash
+        myKeySpaceRange[1] = ourHash-1
+        addr = getLocalIPAddress() + ":" + str(port)
+
+        myProfile = PeerProfile((getLocalIPAddress(),int(port)),myKeySpaceRange[0],myKeySpaceRange[1],fingerTable,addr,addr)
+        for i in range(5):
+            who = owns(randKeyRange)
+            print("Owns: ",who)
+            who_spl = who.split(':')
+            who_tup = (who_spl[0],int(who_spl[1]))
+            #fingerTable[getHashIndex(who_tup)] = who
+            fingerTable[randKeyRange] = who
+            randKeyRange += randKeyRange
+
+        myProfile.fingerTable = fingerTable
+        print("My finger table is",myProfile.fingerTable)
+
         #recv all protocol messages from peer we connected to
         print(menu)
         userInput = input("Command?\n")
