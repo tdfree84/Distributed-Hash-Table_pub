@@ -30,7 +30,7 @@ def owns(number):
             if abs(myProfile.fingerTable[key] - number) < minDist[1]:
                 minDist[0] = key
                 minDist[1] = abs(myProfile.fingerTable[key] - number)
-        return minDist[0] # Return their ip port
+        return minDist[0] # Return their ip:port string
     
 
 #################
@@ -99,6 +99,7 @@ myProfile = ''
 # Seed client is len == 1
 if len(sys.argv) == 1:
     #set up our own thread to start listening for clients
+    print("This is a the seed client")
     threading.Thread(target=waitForPeerConnections, args = (listener,), daemon=True).start()
     addr = getLocalIPAddress() + ":" + str(port)
     fingerTable[addr] = 2**160
@@ -122,7 +123,6 @@ if len(sys.argv) == 1:
         userInput = input("Command?\n")
     
 
-    print("This is a the seed client")
     #this will be for the initial person connecting
 
 # Connecting client passes arguments of ip and port
@@ -144,6 +144,7 @@ elif len(sys.argv) == 3:
 
     tf = recvAll(peerConn, 1)
     if(tf == "T"):
+        #recv all protocol messages from peer we connected to
         print(menu)
         userInput = input("Command?\n")
         while userInput != "disconnect":
@@ -152,6 +153,7 @@ elif len(sys.argv) == 3:
 
             userInput = input("Command?\n")
     else:
+        pass
         #run owns on our hash
 else:
     print("What you doing?")
