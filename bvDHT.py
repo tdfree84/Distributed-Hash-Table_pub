@@ -109,7 +109,7 @@ if len(sys.argv) == 1:
     myKeySpaceRange[1] = getHashIndex((getLocalIPAddress(), int(port)))-1
 
     # Initializing my peer profile
-    myProfile = PeerProfile((getLocalIPAdress(),int(port)),myKeySpaceRange[0],myKeySpaceRange[1],fingerTable,addr,addr)
+    myProfile = PeerProfile((getLocalIPAddress(),int(port)),myKeySpaceRange[0],myKeySpaceRange[1],fingerTable,addr,addr)
 
     userInput = input("Command?")
     while userInput != "disconnect":
