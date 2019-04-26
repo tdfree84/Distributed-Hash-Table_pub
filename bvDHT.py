@@ -20,12 +20,9 @@ def owns(number):
     ''' Find the closest person to the hash number requested. '''
     hashes = list(myProfile.fingerTable.keys())
     hashes.sort(reverse=True)
-    print(hashes)
+    print("Number: " + str(number))
     for i in range(len(hashes)):
-        print(i)
-        print("Number: " + str(number))
         if number > hashes[i]:
-            print("fingerTable Hash: " + myProfile.fingerTable[hashes[i]])
             #if i == 0:
                 #return myProfile.fingerTable[hashes[i]]
             return myProfile.fingerTable[hashes[i]]
@@ -43,11 +40,14 @@ def handlePeer(peerInfo):
     print("I have connected with someone.")
     peerConn, peerAddr = peerInfo
     conMsg = recvAll(peerConn, 3)
+    conMsg = conMsg.decode()
     print(conMsg)
     peerIP, peerPort = recvAddress(peerConn)
     print(peerIP + ":" + str(peerPort))
-    if getHashIndex( (peerIP, peerPort) ) > myKeySpaceRange[0] and getHashIndex( (peerIP, peerPort) ) < myKeySpaceRange[1]:
+    print(myProfile.myAddrString())
+    if owns(getHashIndex((peerIP, peerPort))) == myProfile.myAddrString():
         #sending them a T if we own they space they want
+        print("T")
         peerConn.send('T'.encode())
 
         #send the address of our successor
@@ -65,6 +65,7 @@ def handlePeer(peerInfo):
         #our keyspace ranges
     else:
         #send this if we don't own the space they want
+        print("N")
         peerConn.send('N'.encode())
 
 def waitForPeerConnections(listener):
@@ -158,6 +159,8 @@ elif len(sys.argv) == 3:
     sendAddress(peerConn, peerAddress)
 
     tf = recvAll(peerConn, 1)
+    tf = tf.decode()
+    
     if(tf == "T"):
         #recv all protocol messages from peer we connected to
         print(menu)
