@@ -9,6 +9,9 @@ from net_functions import *
 from hash_functions import *
 from peerProfile import *
 
+menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\n"
+
+
 ####################
 # Helper functions #
 ####################
@@ -25,15 +28,12 @@ def owns(number):
             if abs(myProfile.fingerTable[key] - number) < minDist[1]:
                 minDist[0] = key
                 minDist[1] = abs(myProfile.fingerTable[key] - number)
-        return minDist[0] # Return their ip port
+        return minDist[0] # Return their ip:port string
     
 
 #################
 # Peer handling #
 #################
-
-menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\n"
-
 
 def handlePeer(peerInfo):
     ''' handlePeer receives commands from a client sending requests. '''
@@ -50,8 +50,8 @@ def handlePeer(peerInfo):
         peerConn.send('T'.encode())
 
         #send the address of our successor
-        ''' owns(this.maxHash+1) '''
         #call owns on our max range +1 to find them
+        ''' owns(this.maxHash+1) '''
 
         #send the number of items from their hash
         #to the hash of the successor-1
@@ -97,9 +97,12 @@ myProfile = ''
 # Seed client is len == 1
 if len(sys.argv) == 1:
     #set up our own thread to start listening for clients
+    print("This is a the seed client")
     threading.Thread(target=waitForPeerConnections, args = (listener,), daemon=True).start()
     addr = getLocalIPAddress() + ":" + str(port)
     fingerTable[addr] = getHashIndex((getLocalIPAddress(), int(port)))
+
+    print(menu)
     print("My finger table is",fingerTable)
     myKeySpaceRange[0] = getHashIndex((getLocalIPAddress(), int(port))) 
     myKeySpaceRange[1] = getHashIndex((getLocalIPAddress(), int(port)))-1
@@ -118,7 +121,6 @@ if len(sys.argv) == 1:
         userInput = input("Command?\n")
     
 
-    print("This is a the seed client")
     #this will be for the initial person connecting
 
 # Connecting client passes arguments of ip and port
@@ -140,6 +142,7 @@ elif len(sys.argv) == 3:
 
     tf = recvAll(peerConn, 1)
     if(tf == "T"):
+        #recv all protocol messages from peer we connected to
         print(menu)
         userInput = input("Command?\n")
         while userInput != "disconnect":
