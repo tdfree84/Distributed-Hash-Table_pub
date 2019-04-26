@@ -18,18 +18,11 @@ menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: ge
 
 def owns(number):
     ''' Find the closest person to the hash number requested. '''
-
-    if number >= myProfile.minHash and number <= myProfile.maxHash:
-        return myProfile.myAddress
-    else:
-        # Find the closest person we know to that number
-        minDist = [0,2**160+1]
-        for key in myProfile.fingerTable:
-            if abs(key - number) < minDist[1]:
-                minDist[0] = myProfile.fingerTable[key]
-                minDist[1] = abs(key - number)
-        return minDist[0] # Return their ip:port string
-    
+    hashes = myProfile.fingerTable.keys()
+    hashes.sort()
+    for i in range(len(hashes)):
+        if number > hashes[i]:
+            return myProfile.fingerTable[hashes[i-1]]
 
 #################
 # Peer handling #
@@ -102,14 +95,27 @@ if len(sys.argv) == 1:
     addr = getLocalIPAddress() + ":" + str(port)
     fingerTable[getHashIndex((getLocalIPAddress(), int(port)))] = addr
 
-
     print(menu)
-    print("My finger table is",fingerTable)
-    myKeySpaceRange[0] = getHashIndex((getLocalIPAddress(), int(port))) 
-    myKeySpaceRange[1] = getHashIndex((getLocalIPAddress(), int(port)))-1
+    ourHash = getHashIndex((getLocalIPAddress(), int(port)))
+    myKeySpaceRange[0] = ourHash
+    myKeySpaceRange[1] = ourHash-1
+    print(myKeySpaceRange)
 
     # Initializing my peer profile
     myProfile = PeerProfile((getLocalIPAddress(),int(port)),myKeySpaceRange[0],myKeySpaceRange[1],fingerTable,addr,addr)
+
+    for i in range(5):
+        who = owns(randKeyRange)
+        print("Owns: ",who)
+        who_spl = who.split(':')
+        who_tup = (who_spl[0],int(who_spl[1]))
+        fingerTable[getHashIndex(who_tup)] = who
+        randKeyRange += randKeyRange
+
+    myProfile.fingerTable = fingerTable
+    print("My finger table is",myProfile.fingerTable)
+
+
 
     userInput = input("Command?")
     while userInput != "disconnect":
