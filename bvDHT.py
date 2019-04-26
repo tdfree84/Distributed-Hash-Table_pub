@@ -25,9 +25,9 @@ def owns(number):
         # Find the closest person we know to that number
         minDist = [0,2**160+1]
         for key in myProfile.fingerTable:
-            if abs(myProfile.fingerTable[key] - number) < minDist[1]:
-                minDist[0] = key
-                minDist[1] = abs(myProfile.fingerTable[key] - number)
+            if abs(key - number) < minDist[1]:
+                minDist[0] = myProfile.fingerTable[key]
+                minDist[1] = abs(key - number)
         return minDist[0] # Return their ip:port string
     
 
@@ -100,7 +100,8 @@ if len(sys.argv) == 1:
     print("This is a the seed client")
     threading.Thread(target=waitForPeerConnections, args = (listener,), daemon=True).start()
     addr = getLocalIPAddress() + ":" + str(port)
-    fingerTable[addr] = getHashIndex((getLocalIPAddress(), int(port)))
+    fingerTable[getHashIndex((getLocalIPAddress(), int(port)))] = addr
+
 
     print(menu)
     print("My finger table is",fingerTable)
