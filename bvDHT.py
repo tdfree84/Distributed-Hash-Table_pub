@@ -18,11 +18,19 @@ menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: ge
 
 def owns(number):
     ''' Find the closest person to the hash number requested. '''
-    hashes = myProfile.fingerTable.keys()
-    hashes.sort()
+    hashes = list(myProfile.fingerTable.keys())
+    hashes.sort(reverse=True)
+    print(hashes)
     for i in range(len(hashes)):
+        print(i)
+        print("Number: " + str(number))
         if number > hashes[i]:
-            return myProfile.fingerTable[hashes[i-1]]
+            print("fingerTable Hash: " + myProfile.fingerTable[hashes[i]])
+            #if i == 0:
+                #return myProfile.fingerTable[hashes[i]]
+            return myProfile.fingerTable[hashes[i]]
+
+    #return myProfile.fingerTable[hashes[0]]
 
 #################
 # Peer handling #
@@ -94,6 +102,7 @@ if len(sys.argv) == 1:
     threading.Thread(target=waitForPeerConnections, args = (listener,), daemon=True).start()
     addr = getLocalIPAddress() + ":" + str(port)
     fingerTable[getHashIndex((getLocalIPAddress(), int(port)))] = addr
+    fingerTable[0] = addr
 
     print(menu)
     ourHash = getHashIndex((getLocalIPAddress(), int(port)))
@@ -109,7 +118,8 @@ if len(sys.argv) == 1:
         print("Owns: ",who)
         who_spl = who.split(':')
         who_tup = (who_spl[0],int(who_spl[1]))
-        fingerTable[getHashIndex(who_tup)] = who
+        #fingerTable[getHashIndex(who_tup)] = who
+        fingerTable[randKeyRange] = who
         randKeyRange += randKeyRange
 
     myProfile.fingerTable = fingerTable
