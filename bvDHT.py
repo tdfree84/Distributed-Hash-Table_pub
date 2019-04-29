@@ -42,49 +42,82 @@ def handlePeer(peerInfo):
     conMsg = recvAll(peerConn, 3)
     conMsg = conMsg.decode()
     print(conMsg)
-    peerIP, peerPort = recvAddress(peerConn)
-    print(peerIP + ":" + str(peerPort))
-    print(myProfile.myAddrString())
-    if owns(getHashIndex((peerIP, peerPort))) == myProfile.myAddrString():
-        #sending them a T if we own they space they want
-        print("T")
-        peerConn.send('T'.encode())
-        #update our fingertable
-        fingerTable = {}
-        fingerTable[getHashIndex((peerIP,peerPort))] = str(peerIP + ":" +str(peerPort))
-        fingerTable[getHashIndex(myProfile.myAddress)] = myProfile.myAddrString()
-        for i in range(5):
-            randKeyRange = random.randint(0, keySpaceRanges)
-            who = owns(randKeyRange)
-            print("Owns: ",who)
-            who_spl = who.split(':')
-            who_tup = (who_spl[0],int(who_spl[1]))
-            #fingerTable[getHashIndex(who_tup)] = who
-            fingerTable[randKeyRange] = who
-            randKeyRange += randKeyRange
+    while conMsg != "DIS":
+        if conMsg == "CON":
+            peerIP, peerPort = recvAddress(peerConn)
+            print(peerIP + ":" + str(peerPort))
+            print(myProfile.myAddrString())
+            if owns(getHashIndex((peerIP, peerPort))) == myProfile.myAddrString():
+                #####################
+                #CONNECTION PROTOCOL#
+                #####################
 
-        myProfile.fingerTable = fingerTable
-        print("My finger table is",myProfile.fingerTable)
+                #sending them a T if we own they space they want
+                print("T")
+                peerConn.send('T'.encode())
+                #update our fingertable
+                fingerTable = {}
+                fingerTable[getHashIndex((peerIP,peerPort))] = str(peerIP + ":" +str(peerPort))
+                fingerTable[getHashIndex(myProfile.myAddress)] = myProfile.myAddrString()
+                for i in range(5):
+                    randKeyRange = random.randint(0, keySpaceRanges)
+                    who = owns(randKeyRange)
+                    print("Owns: ",who)
+                    who_spl = who.split(':')
+                    who_tup = (who_spl[0],int(who_spl[1]))
+                    #fingerTable[getHashIndex(who_tup)] = who
+                    fingerTable[randKeyRange] = who
+                    randKeyRange += randKeyRange
+
+                myProfile.fingerTable = fingerTable
+                print("My finger table is",myProfile.fingerTable)
 
 
-        #send the address of our successor
-        #call owns on our max range +1 to find them
-        ''' owns(this.maxHash+1) '''
 
-        #send the number of items from their hash
-        #to the hash of the successor-1
+                #send the address of our successor
+                successor = myProfile.successor.split(":")
+                successorIP = successor[0]
+                successorPort = successor[1]
 
-        #for number of items, send [key][valSize][val] to peer
+                sendAddress(peerConn, (successorIP, int(successorPort)))
 
-        #receive a T from the client to say everything was received
+                #send the number of items from their hash
+                #get file names from repo
+                fNameList = os.listdir('repo')
+                listToSend = []
+                for n in fNameList:
+                    nInt = int(n)
+                    if nInt < getHashIndex((successorIP, int(successorPort))) and nInt > getHashIndex((peerIP, int(peerPort))):
+                        listToSend.append(n)
 
-        #once done, we no longer own that keyspace, so update
-        #our keyspace ranges
+                sendInt(peerConn, len(listToSend))
 
-    else:
-        #send this if we don't own the space they want
-        print("N")
-        peerConn.send('N'.encode())
+                #for number of items, send [key][valSize][val] to peer
+                for n in listToSend:
+                    f = open('/repo/' + n, 'rb')
+                    fBytes = f.read()
+                    sendKey(peerConn, int(n))
+                    sendVal(peerConn, fBytes) 
+                    f.close()
+
+
+                #receive a T from the client to say everything was received
+                tf = recvAll(peerConn, 1)
+                if tf = 'T':
+                    #set successor to person who just connected to us
+                    #they are now our new successor
+                    #once done, we no longer own that keyspace, so update
+                    #our keyspace ranges
+                    myProfile.successor = peerIP + ":" + str(peerPort)
+                    
+            else:
+                #send this if we don't own the space they want
+                print("N")
+                peerConn.send('N'.encode())
+
+        conMsg = recvAll(peerConn, 3)
+        conMsg = conMsg.decode()
+
 
 def waitForPeerConnections(listener):
     ''' waitForPeerConnections listens for other peers to connect to us and spawns off a new thread for each peer that connects. '''
@@ -151,6 +184,9 @@ if len(sys.argv) == 1:
         print("Running")
         print(menu)
 
+        if userInput == "1":
+            ###INSERT###
+
 
         
 
@@ -185,7 +221,7 @@ elif len(sys.argv) == 3:
         addr = getLocalIPAddress() + ":" + str(port)
         # Add ourselves to the finger table
         fingerTable[getHashIndex((getLocalIPAddress(), int(port)))] = addr 
-        # Add whoever just joined
+        # Add who we just connected to
         fingerTable[getHashIndex((peerIP, int(peerPort)))] = peerIP +":"+ str(peerPort)
         
         # Set our keyspace (THIS IS WRONG AND NEES TO CHANGE)
@@ -214,6 +250,10 @@ elif len(sys.argv) == 3:
         while userInput != "disconnect":
             print("Running")
             print(menu)
+
+            if userInput == "1":
+                pass
+                ###INSERT###
 
             userInput = input("Command?\n")
     else:
