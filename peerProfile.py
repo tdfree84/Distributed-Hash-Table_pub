@@ -19,5 +19,5 @@ class PeerProfile:
         self.predecessor = _predecessor
         self.myAddress = _myAddr
 
-    def myAddrString():
-        return myAddress[0]+":"+str(myAddress[1])
+    def myAddrString(self):
+        return self.myAddress[0]+":"+str(self.myAddress[1])
