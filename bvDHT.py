@@ -29,6 +29,16 @@ def owns(number):
 
     return myProfile.fingerTable[hashes[0]]
 
+def insertFile():
+    ''' Inserts file into the DHT. '''
+
+    fileName = input("What is the file called on your system? ")
+    try:
+        f = open('fileName','r')
+    except:
+        print("Oops..can't find that file?")
+        return
+
 #################
 # Peer handling #
 #################
@@ -229,8 +239,21 @@ elif len(sys.argv) == 3:
         myKeySpaceRange[0] = ourHash
         myKeySpaceRange[1] = ourHash-1
         
+        # Finish out rest of connection protocol after we have the ok to continue #
+        peerSuccessor = recvAddress(peerConn)
+        peerSuccessor = peerSuccessor[0]+":"+str(peerSuccessor[1])
+
+        numItems = recvInt(peerConn)
+        if numItems == 0:
+            print("Received zero")
+            # Send peer we acknowledge we are supposed to receive nothing
+            sendVal(peerConn, "T".encode())
+        for i in range(numItems):
+            print("Receiving file..")
+        # End connection protocol #
+
         # Initializing my peer profile
-        myProfile = PeerProfile((getLocalIPAddress(),int(port)),myKeySpaceRange[0],myKeySpaceRange[1],fingerTable,addr,addr)
+        myProfile = PeerProfile((getLocalIPAddress(),int(port)),myKeySpaceRange[0],myKeySpaceRange[1],fingerTable,peerSuccessor,peerSuccessor)
 
         for i in range(5):
             who = owns(randKeyRange)
@@ -248,7 +271,6 @@ elif len(sys.argv) == 3:
         print(menu)
         userInput = input("Command?\n")
         while userInput != "disconnect":
-            print("Running")
             print(menu)
 
             if userInput == "1":
