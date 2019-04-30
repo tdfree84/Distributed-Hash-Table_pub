@@ -20,12 +20,9 @@ menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: ge
 def owns(number):
     ''' Find the closest person to the hash number requested. '''
     hashes = list(myProfile.fingerTable.keys())
-    print(hashes)
     hashes.sort(reverse=True)
-    [print(h) for h in hashes]
-    #print("Number: " + str(number))
     for i in range(len(hashes)):
-        if number > hashes[i]:
+        if number >= hashes[i]:
             #if i == 0:
                 #return myProfile.fingerTable[hashes[i]]
             print("FOUND SOMEONE IN MY FINGER TABLE")
@@ -37,25 +34,20 @@ def owns(number):
 def insertFile(peerConn):
     ''' Inserts file into the DHT. '''
 
-    peerConn.send("INS".encode())
+    peerConn.send("INS".encode()) # Tell them we want to insert
+
     keyName = input("What is the name of what you want to store? ")
     value = input("What exactly do you want to store? ")
     hashed_key = int.from_bytes(hashlib.sha1(keyName.encode()).digest(), byteorder="big")
-    whoisit = owns(hashed_key)
-    # Getting our hashed index
-    print("My hashed number is:")
-    x = getHashIndex(myProfile.myAddress)
-    print(x)
-    print("Data storage hash is:")
-    print(hashed_key)
-    print("THis person owns it:",whoisit)
-    print("Their hash is:")
-    y = getHashIndex((whoisit.split(':')[0],int(whoisit.split(':')[1])))
-    print(y)
-    # Begin sending file
-    sendKey(peerConn, int(hashed_key))
 
-    tf = recvAll(peerConn, 1)
+    whoisit = owns(hashed_key)
+    print("This person owns it:",whoisit)
+
+    # Begin sending file
+    sendKey(peerConn, int(hashed_key)) # Send them our data's hashed key
+    sendVal(peerConn, value.encode())  # Send them the data
+
+    tf = recvAll(peerConn, 1) # Wait for them to respond
     tf = tf.decode()
     print("Receiving back from peer:",str(tf))
     if tf == "T":
