@@ -19,17 +19,24 @@ menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: ge
 
 def owns(number):
     ''' Find the closest person to the hash number requested. '''
+
     hashes = list(myProfile.fingerTable.keys())
     hashes.sort(reverse=True)
     for i in range(len(hashes)):
         if number >= hashes[i]:
-            #if i == 0:
-                #return myProfile.fingerTable[hashes[i]]
-            print("FOUND SOMEONE IN MY FINGER TABLE")
-            return myProfile.fingerTable[hashes[i]]
 
-    print("USED LARGEST HASH")
     return myProfile.fingerTable[hashes[0]]
+
+def request_owns(peerConn):
+    ''' Request an owns query from a peer. '''
+
+    k = input("Enter a key: ")
+    hashed_key = int.from_bytes(hashlib.sha1(k.encode()).digest(), byteorder="big")
+    peerConn.send("OWN".encode()) # Say we want an owns query
+    sendKey(peerConn, hashed_key) # Send them hashed key
+
+    who = recvAddress(peerConn)
+    print("This is who might own it:",who)
 
 def insertFile(peerConn):
     ''' Inserts file into the DHT. '''
@@ -173,7 +180,6 @@ def handlePeer(peerInfo):
             print("FILENAME: " + str(fileName))
             print("MY NAME: " + myProfile.myAddrString())
 
-            #if int(fileName) < getHashIndex((successorIP, int(successorPort))) and int(fileName) > getHashIndex((myProfile.myAddress[0], int(myProfile.myAddress[1]))):
             if owns(fileName) == myProfile.myAddrString():
                 peerConn.send("T".encode())
                 fileSize = recvInt(peerConn)
@@ -355,10 +361,9 @@ elif len(sys.argv) == 3:
                 getFile(peerConn)
 
             elif userInput == "5":
-                i = input("Enter a key")
-                owner = owns(i)
-                print(owner)
-            
+                ##OWNS##
+                request_owns(peerConn)
+                
             userInput = input("Command?\n")
     else:
         pass
