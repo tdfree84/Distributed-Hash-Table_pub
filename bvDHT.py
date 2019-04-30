@@ -20,17 +20,14 @@ menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: ge
 def owns(number):
     ''' Find the closest person to the hash number requested. '''
     hashes = list(myProfile.fingerTable.keys())
-    print(hashes)
     hashes.sort(reverse=True)
     #print("Number: " + str(number))
     for i in range(len(hashes)):
-        if number > hashes[i]:
+        if number >= hashes[i]:
             #if i == 0:
                 #return myProfile.fingerTable[hashes[i]]
-            print("FOUND SOMEONE IN MY FINGER TABLE")
             return myProfile.fingerTable[hashes[i]]
 
-    print("USED LARGEST HASH")
     return myProfile.fingerTable[hashes[0]]
 
 def insertFile(peerConn):
@@ -182,11 +179,14 @@ def handlePeer(peerInfo):
 
             #if int(fileName) < getHashIndex((successorIP, int(successorPort))) and int(fileName) > getHashIndex((myProfile.myAddress[0], int(myProfile.myAddress[1]))):
             if owns(fileName) == myProfile.myAddrString():
-                peerConn.send("T".encode())
+                print("I own this.")
                 fileSize = recvInt(peerConn)
                 fileContent = recvAll(peerConn, fileSize)
+                peerConn.send("T".encode())
                 print("FILE: " + str(fileContent))
-                f = open('repo/' + str(fileName), 'w')
+                f = open('repo/' + str(fileName), 'wb')
+                f.write(fileContent)
+                f.close()
             else:
                 peerConn.send("N".encode())
 
