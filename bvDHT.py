@@ -38,6 +38,24 @@ def insertFile():
     except:
         print("Oops..can't find that file?")
         return
+    
+def getFile(peerConn, key):
+    peerConn.send("GET".encode())
+
+    sendAddress(peerConn, #hash keyhere)
+    tf = recvAll(peerConn, 1)
+    tf = tf.decode()
+    if tf == "T":
+        length = recvInt(peerConn)
+        data = recvVal(peerConn)
+    elif tf == "F":
+        print("Data not found")
+    elif tf == "N":
+        print("Peer doesn't own this space")
+        #rerun owns on the key
+
+    
+
 
 #################
 # Peer handling #
@@ -292,11 +310,23 @@ elif len(sys.argv) == 3:
         #recv all protocol messages from peer we connected to
         print(menu)
         userInput = input("Command?\n")
+
         while userInput != "disconnect":
             print(menu)
 
             if userInput == "1":
+                ##INSERT##
                 insertFile()
+
+            elif userInput == "3":
+                ##GET##
+                getFile(peerConn)
+
+            elif userInput == "5":
+                i = input("Enter a key")
+                owner = owns(i)
+                print(owner)
+            
 
             userInput = input("Command?\n")
     else:
