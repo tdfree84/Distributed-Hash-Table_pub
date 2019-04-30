@@ -28,9 +28,10 @@ def owns(number):
         if number > hashes[i]:
             #if i == 0:
                 #return myProfile.fingerTable[hashes[i]]
-            print("I FOUND SOMEONE IN MY FINGER TABLE WHO HAs IT")
+            print("FOUND SOMEONE IN MY FINGER TABLE")
             return myProfile.fingerTable[hashes[i]]
 
+    print("USED LARGEST HASH")
     return myProfile.fingerTable[hashes[0]]
 
 def insertFile(peerConn):
@@ -66,7 +67,7 @@ def insertFile(peerConn):
 def getFile(peerConn, key):
     peerConn.send("GET".encode())
 
-    #sendAddress(peerConn, #hash keyhere)
+    #sendAddress(peerConn, #hash keyhere))
     tf = recvAll(peerConn, 1)
     tf = tf.decode()
     if tf == "T":
@@ -165,7 +166,6 @@ def handlePeer(peerInfo):
                     #once done, we no longer own that keyspace, so update
                     #our keyspace ranges
                     myProfile.successor = peerIP + ":" + str(peerPort)
-                    
             else:
                 #send this if we don't own the space they want
                 print("N")
@@ -175,8 +175,8 @@ def handlePeer(peerInfo):
             #################
             #INSERT PROTOCOL#
             #################
-            o = owns(fileName)
             fileName = recvKey(peerConn)
+            o = owns(fileName)
             print("PEERNAME :" + o)
             print("FILENAME: " + str(fileName))
             print("MY NAME: " + myProfile.myAddrString())
@@ -253,14 +253,15 @@ if len(sys.argv) == 1:
     # Initializing my peer profile
     myProfile = PeerProfile((getLocalIPAddress(),int(port)),myKeySpaceRange[0],myKeySpaceRange[1],fingerTable,addr,addr)
 
+    offset = randKeyRange
     for i in range(5):
-        who = owns(randKeyRange)
+        who = owns(offset)
         print("Owns: ",who)
         who_spl = who.split(':')
         who_tup = (who_spl[0],int(who_spl[1]))
         #fingerTable[getHashIndex(who_tup)] = who
-        fingerTable[randKeyRange] = who
-        randKeyRange += randKeyRange
+        fingerTable[offset] = who
+        offset += randKeyRange
 
     myProfile.fingerTable = fingerTable
     print("My finger table is",myProfile.fingerTable)
@@ -333,14 +334,15 @@ elif len(sys.argv) == 3:
         # Initializing my peer profile
         myProfile = PeerProfile((getLocalIPAddress(),int(port)),myKeySpaceRange[0],myKeySpaceRange[1],fingerTable,peerSuccessor,peerSuccessor)
 
+        offset = randKeyRange
         for i in range(5):
-            who = owns(randKeyRange)
+            who = owns(offset)
             #print("Owns: ",who)
             who_spl = who.split(':')
             who_tup = (who_spl[0],int(who_spl[1]))
             #fingerTable[getHashIndex(who_tup)] = who
-            fingerTable[randKeyRange] = who
-            randKeyRange += randKeyRange
+            fingerTable[offset] = who
+            offset += randKeyRange
 
         myProfile.fingerTable = fingerTable
         print("My finger table is",myProfile.fingerTable)
