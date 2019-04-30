@@ -20,12 +20,15 @@ menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: ge
 def owns(number):
     ''' Find the closest person to the hash number requested. '''
     hashes = list(myProfile.fingerTable.keys())
+    print(hashes)
     hashes.sort(reverse=True)
+    [print(h) for h in hashes]
     #print("Number: " + str(number))
     for i in range(len(hashes)):
         if number > hashes[i]:
             #if i == 0:
                 #return myProfile.fingerTable[hashes[i]]
+            print("I FOUND SOMEONE IN MY FINGER TABLE WHO HAs IT")
             return myProfile.fingerTable[hashes[i]]
 
     return myProfile.fingerTable[hashes[0]]
@@ -38,7 +41,16 @@ def insertFile(peerConn):
     value = input("What exactly do you want to store? ")
     hashed_key = int.from_bytes(hashlib.sha1(keyName.encode()).digest(), byteorder="big")
     whoisit = owns(hashed_key)
+    # Getting our hashed index
+    print("My hashed number is:")
+    x = getHashIndex(myProfile.myAddress)
+    print(x)
+    print("Data storage hash is:")
+    print(hashed_key)
     print("THis person owns it:",whoisit)
+    print("Their hash is:")
+    y = getHashIndex((whoisit.split(':')[0],int(whoisit.split(':')[1])))
+    print(y)
     # Begin sending file
     sendKey(peerConn, int(hashed_key))
 
@@ -54,7 +66,7 @@ def insertFile(peerConn):
 def getFile(peerConn, key):
     peerConn.send("GET".encode())
 
-    sendAddress(peerConn, #hash keyhere)
+    #sendAddress(peerConn, #hash keyhere)
     tf = recvAll(peerConn, 1)
     tf = tf.decode()
     if tf == "T":
@@ -306,6 +318,7 @@ elif len(sys.argv) == 3:
         
         # Finish out rest of connection protocol after we have the ok to continue #
         peerSuccessor = recvAddress(peerConn)
+        fingerTable[getHashIndex(peerSuccessor)] = peerSuccessor[0]+":"+str(peerSuccessor[1])
         peerSuccessor = peerSuccessor[0]+":"+str(peerSuccessor[1])
 
         numItems = recvInt(peerConn)
@@ -341,7 +354,7 @@ elif len(sys.argv) == 3:
 
             if userInput == "1":
                 ##INSERT##
-                insertFile()
+                insertFile(peerConn)
 
             elif userInput == "3":
                 ##GET##
