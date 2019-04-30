@@ -20,7 +20,7 @@ def owns(number):
     ''' Find the closest person to the hash number requested. '''
     hashes = list(myProfile.fingerTable.keys())
     hashes.sort(reverse=True)
-    print("Number: " + str(number))
+    #print("Number: " + str(number))
     for i in range(len(hashes)):
         if number > hashes[i]:
             #if i == 0:
@@ -63,7 +63,7 @@ def handlePeer(peerInfo):
                 #####################
 
                 #sending them a T if we own they space they want
-                print("T")
+                print("T\n")
                 peerConn.send('T'.encode())
                 #update our fingertable
                 fingerTable = {}
@@ -104,7 +104,7 @@ def handlePeer(peerInfo):
 
                 #for number of items, send [key][valSize][val] to peer
                 for n in listToSend:
-                    f = open('/repo/' + n, 'rb')
+                    f = open('repo/' + n, 'rb')
                     fBytes = f.read()
                     sendKey(peerConn, int(n))
                     sendVal(peerConn, fBytes) 
@@ -113,7 +113,7 @@ def handlePeer(peerInfo):
 
                 #receive a T from the client to say everything was received
                 tf = recvAll(peerConn, 1)
-                if tf = 'T':
+                if tf == 'T':
                     #set successor to person who just connected to us
                     #they are now our new successor
                     #once done, we no longer own that keyspace, so update
@@ -123,10 +123,34 @@ def handlePeer(peerInfo):
             else:
                 #send this if we don't own the space they want
                 print("N")
-                peerConn.send('N'.encode())
+                peerConn.send("N".encode())
+
+        elif conMsg == "INS":
+            #################
+            #INSERT PROTOCOL#
+            #################
+            o = owns(fileName)
+            fileName = recvKey(peerConn)
+            print("PEERNAME :" + o)
+            print("FILENAME: " + str(fileName))
+            print("MY NAME: " + myProfile.myAddrString())
+
+            #if int(fileName) < getHashIndex((successorIP, int(successorPort))) and int(fileName) > getHashIndex((myProfile.myAddress[0], int(myProfile.myAddress[1]))):
+            if owns(fileName) == myProfile.myAddrString():
+                peerConn.send("T".encode())
+                fileSize = recvInt(peerConn)
+                fileContent = recvAll(peerConn, fileSize)
+                print("FILE: " + str(fileContent))
+                f = open('repo/' + str(fileName), 'w')
+            else:
+                peerConn.send("N".encode())
 
         conMsg = recvAll(peerConn, 3)
-        conMsg = conMsg.decode()
+        try:
+            conMsg = conMsg.decode()
+            print(conMsg)
+        except:
+            pass
 
 
 def waitForPeerConnections(listener):
@@ -170,7 +194,7 @@ if len(sys.argv) == 1:
     ourHash = getHashIndex((getLocalIPAddress(), int(port)))
     myKeySpaceRange[0] = ourHash
     myKeySpaceRange[1] = ourHash-1
-    print(myKeySpaceRange)
+    #print(myKeySpaceRange)
 
     # Initializing my peer profile
     myProfile = PeerProfile((getLocalIPAddress(),int(port)),myKeySpaceRange[0],myKeySpaceRange[1],fingerTable,addr,addr)
@@ -196,15 +220,13 @@ if len(sys.argv) == 1:
 
         if userInput == "1":
             ###INSERT###
+            insertFile()
 
 
         
 
         userInput = input("Command?\n")
     
-
-    #this will be for the initial person connecting
-
 # Connecting client passes arguments of ip and port
 elif len(sys.argv) == 3:
     #this is for any peer trying to connect to another peer
@@ -274,8 +296,7 @@ elif len(sys.argv) == 3:
             print(menu)
 
             if userInput == "1":
-                pass
-                ###INSERT###
+                insertFile()
 
             userInput = input("Command?\n")
     else:
