@@ -22,7 +22,6 @@ def owns(number):
     hashes = list(myProfile.fingerTable.keys())
     print(hashes)
     hashes.sort(reverse=True)
-    print(hashes)
     #print("Number: " + str(number))
     for i in range(len(hashes)):
         if number > hashes[i]:
@@ -42,7 +41,16 @@ def insertFile(peerConn):
     value = input("What exactly do you want to store? ")
     hashed_key = int.from_bytes(hashlib.sha1(keyName.encode()).digest(), byteorder="big")
     whoisit = owns(hashed_key)
+    # Getting our hashed index
+    print("My hashed number is:")
+    x = getHashIndex(myProfile.myAddress)
+    print(x)
+    print("Data storage hash is:")
+    print(hashed_key)
     print("THis person owns it:",whoisit)
+    print("Their hash is:")
+    y = getHashIndex((whoisit.split(':')[0],int(whoisit.split(':')[1])))
+    print(y)
     # Begin sending file
     sendKey(peerConn, int(hashed_key))
 
@@ -310,6 +318,7 @@ elif len(sys.argv) == 3:
         
         # Finish out rest of connection protocol after we have the ok to continue #
         peerSuccessor = recvAddress(peerConn)
+        fingerTable[getHashIndex(peerSuccessor)] = peerSuccessor[0]+":"+str(peerSuccessor[1])
         peerSuccessor = peerSuccessor[0]+":"+str(peerSuccessor[1])
 
         numItems = recvInt(peerConn)
