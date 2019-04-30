@@ -244,14 +244,15 @@ if len(sys.argv) == 1:
     # Initializing my peer profile
     myProfile = PeerProfile((getLocalIPAddress(),int(port)),myKeySpaceRange[0],myKeySpaceRange[1],fingerTable,addr,addr)
 
+    offset = randKeyRange
     for i in range(5):
-        who = owns(randKeyRange)
+        who = owns(offset)
         print("Owns: ",who)
         who_spl = who.split(':')
         who_tup = (who_spl[0],int(who_spl[1]))
         #fingerTable[getHashIndex(who_tup)] = who
-        fingerTable[randKeyRange] = who
-        randKeyRange += randKeyRange
+        fingerTable[offset] = who
+        offset += randKeyRange
 
     myProfile.fingerTable = fingerTable
     print("My finger table is",myProfile.fingerTable)
