@@ -5,6 +5,7 @@ import os
 import time
 import threading
 import random
+import hashlib
 from net_functions import *
 from hash_functions import *
 from peerProfile import *
@@ -29,14 +30,25 @@ def owns(number):
 
     return myProfile.fingerTable[hashes[0]]
 
-def insertFile():
+def insertFile(peerConn):
     ''' Inserts file into the DHT. '''
 
-    fileName = input("What is the file called on your system? ")
-    try:
-        f = open('fileName','r')
-    except:
-        print("Oops..can't find that file?")
+    peerConn.send("INS".encode())
+    keyName = input("What is the name of what you want to store? ")
+    value = input("What exactly do you want to store? ")
+    hashed_key = int.from_bytes(hashlib.sha1(keyName.encode()).digest(), byteorder="big")
+    whoisit = owns(hashed_key)
+    print("THis person owns it:",whoisit)
+    # Begin sending file
+    sendKey(peerConn, int(hashed_key))
+
+    tf = recvAll(peerConn, 1)
+    tf = tf.decode()
+    print("Receiving back from peer:",str(tf))
+    if tf == "T":
+        print("all went good.")
+    else:
+        print("Something went wrong with your destination storage.")
         return
     
 def getFile(peerConn, key):
@@ -55,6 +67,10 @@ def getFile(peerConn, key):
         #rerun owns on the key
 
     
+
+
+    sendInt(peerConn, len(value))
+    peerConn.send(value.encode())
 
 
 #################
@@ -178,6 +194,14 @@ def waitForPeerConnections(listener):
         peerInfo = listener.accept()
         threading.Thread(target=handlePeer, args = (peerInfo,), daemon=True).start()
 
+
+
+####################################
+#######                      #######
+######  BEGINNING OF RUNNING  ######
+#######                      #######
+####################################
+
 listener = socket(AF_INET, SOCK_STREAM)
 listener.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 listener.bind(('', 0))
@@ -237,6 +261,7 @@ if len(sys.argv) == 1:
         print(menu)
 
         if userInput == "1":
+            pass
             ###INSERT###
             insertFile()
 
@@ -287,7 +312,7 @@ elif len(sys.argv) == 3:
         if numItems == 0:
             print("Received zero")
             # Send peer we acknowledge we are supposed to receive nothing
-            sendVal(peerConn, "T".encode())
+            peerConn.send("T".encode())
         for i in range(numItems):
             print("Receiving file..")
         # End connection protocol #
@@ -327,7 +352,6 @@ elif len(sys.argv) == 3:
                 owner = owns(i)
                 print(owner)
             
-
             userInput = input("Command?\n")
     else:
         pass
