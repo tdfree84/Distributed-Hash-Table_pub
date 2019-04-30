@@ -190,12 +190,25 @@ def handlePeer(peerInfo):
             else:
                 peerConn.send("N".encode())
 
+        elif conMsg == "OWN":
+            key = recvKey(peerConn)
+            owner = owns(key)
+            #do a pulse check here
+            ownerList = owner.split(":")
+            ownerIP = ownerList[0]
+            ownerPort = ownerList[1]
+            sendAddress(peerConn, (ownerIP, ownerPort))
+
         conMsg = recvAll(peerConn, 3)
         try:
             conMsg = conMsg.decode()
             print(conMsg)
         except:
             pass
+
+            
+
+
 
 
 def waitForPeerConnections(listener):
@@ -362,9 +375,7 @@ elif len(sys.argv) == 3:
                 getFile(peerConn)
 
             elif userInput == "5":
-                i = input("Enter a key")
-                owner = owns(i)
-                print(owner)
+                k = input("Enter a key")
             
             userInput = input("Command?\n")
     else:
