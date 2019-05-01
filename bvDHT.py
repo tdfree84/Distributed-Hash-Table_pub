@@ -35,13 +35,19 @@ def owns(number):
                 try:
                     conn.connect((connIP, connPort))
                     conn.send("PUL".encode())
-                    t = recvAll(conn, 1)
-                    t = t.decode()
-                    if t == "T":
-                        return myProfile.fingerTable[hashes[i]]
                 except:
+                    conn.close()
                     del myProfile.fingerTable[hashes[i]]
-                    return owns(number)
+                    if i-1 >= 0:
+                        return myProfile.fingerTable[hashes[i-1]]
+                    else:
+                        return myProfile.myAddrString()
+
+                t = recvAll(conn, 1)
+                t = t.decode()
+                if t == "T":
+                    conn.close()
+                    return myProfile.fingerTable[hashes[i]]
             else:
                 return myProfile.myAddrString()
 
