@@ -257,10 +257,61 @@ def handlePeer(peerInfo):
             key = recvKey(peerConn)
             owner = owns(key)
             #do a pulse check here
+
             ownerList = owner.split(":")
             ownerIP = ownerList[0]
             ownerPort = int(ownerList[1])
             sendAddress(peerConn, (ownerIP, ownerPort))
+
+        elif conMsg == "GET":
+            key = recvKey(peerConn)
+            print("Key to Get: " + str(key))
+
+            if owns(key) == myProfile.myAddrString():
+                print("in get")
+                peerConn.send("T".encode())
+                try:
+                    f = open("repo/"+str(key), "rb")
+                    print("reading file")
+                    fileToSend = f.read()
+                    sendVal(peerConn, fileToSend)
+                    f.close()
+                except:
+                    peerConn.send("F".encode())
+            else:
+                peerConn.send("N".encode())
+
+        elif conMsg == "EXI":
+            key = recvKey(peerConn)
+
+            if owns(key) == myProfile.myAddrString():
+                try:
+                    f=open("repo/"+str(key), "rb")
+                    peerConn.send("T".encode())
+                except:
+                    peerConn.send("F".encode())
+            else:
+                peerConn.send("N".encode())
+
+        elif conMsg == "REM":
+            key = recvKey(peerConn)
+            keyStr = str(key)
+
+            if owns(key) == myProfile.myAddrString():
+                try:
+                    f=open("repo/"+keyStr, "rb")
+                    os.remove("repo/"+keyStr)
+                    if not (os.path.exists("repo/"+keyStr)):
+                        peerConn.send("T".encode())
+                except:
+                    peerConn.send("F".encode())
+            else:
+                peerConn.send("N".encode())
+
+        elif conMsg == "PUL":
+            peerConn.send("T".encode())
+
+
 
         conMsg = recvAll(peerConn, 3)
         try:
