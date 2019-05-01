@@ -19,39 +19,45 @@ menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: ge
 
 def owns(number):
     ''' Find the closest person to the hash number requested. '''
+
     hashes = list(myProfile.fingerTable.keys())
     hashes.sort(reverse=True)
     #print("Number: " + str(number))
     for i in range(len(hashes)):
         if number >= hashes[i]:
-            #if i == 0:
-                #return myProfile.fingerTable[hashes[i]]
+            #Establish connection to person we find
             return myProfile.fingerTable[hashes[i]]
 
     return myProfile.fingerTable[hashes[0]]
 
+def request_owns(peerConn):
+    ''' Request an owns query from a peer. '''
+
+    k = input("Enter a key: ")
+    hashed_key = int.from_bytes(hashlib.sha1(k.encode()).digest(), byteorder="big")
+    peerConn.send("OWN".encode()) # Say we want an owns query
+    sendKey(peerConn, hashed_key) # Send them hashed key
+
+    who = recvAddress(peerConn)
+    print("This is who might own it:",who)
+
 def insertFile(peerConn):
     ''' Inserts file into the DHT. '''
 
-    peerConn.send("INS".encode())
+    peerConn.send("INS".encode()) # Tell them we want to insert
+
     keyName = input("What is the name of what you want to store? ")
     value = input("What exactly do you want to store? ")
     hashed_key = int.from_bytes(hashlib.sha1(keyName.encode()).digest(), byteorder="big")
-    whoisit = owns(hashed_key)
-    # Getting our hashed index
-    print("My hashed number is:")
-    x = getHashIndex(myProfile.myAddress)
-    print(x)
-    print("Data storage hash is:")
-    print(hashed_key)
-    print("THis person owns it:",whoisit)
-    print("Their hash is:")
-    y = getHashIndex((whoisit.split(':')[0],int(whoisit.split(':')[1])))
-    print(y)
-    # Begin sending file
-    sendKey(peerConn, int(hashed_key))
 
-    tf = recvAll(peerConn, 1)
+    whoisit = owns(hashed_key)
+    print("This person owns it:",whoisit)
+
+    # Begin sending file
+    sendKey(peerConn, int(hashed_key)) # Send them our data's hashed key
+    sendVal(peerConn, value.encode())  # Send them the data
+
+    tf = recvAll(peerConn, 1) # Wait for them to respond
     tf = tf.decode()
     print("Receiving back from peer:",str(tf))
     if tf == "T":
@@ -60,26 +66,21 @@ def insertFile(peerConn):
         print("Something went wrong with your destination storage.")
         return
     
-def getFile(peerConn, key):
+def getFile(peerConn):
     peerConn.send("GET".encode())
 
     #sendAddress(peerConn, #hash keyhere))
     tf = recvAll(peerConn, 1)
     tf = tf.decode()
     if tf == "T":
-        length = recvInt(peerConn)
         data = recvVal(peerConn)
+
     elif tf == "F":
         print("Data not found")
     elif tf == "N":
         print("Peer doesn't own this space")
         #rerun owns on the key
 
-    
-
-
-    sendInt(peerConn, len(value))
-    peerConn.send(value.encode())
 
 
 #################
@@ -177,7 +178,6 @@ def handlePeer(peerInfo):
             print("FILENAME: " + str(fileName))
             print("MY NAME: " + myProfile.myAddrString())
 
-            #if int(fileName) < getHashIndex((successorIP, int(successorPort))) and int(fileName) > getHashIndex((myProfile.myAddress[0], int(myProfile.myAddress[1]))):
             if owns(fileName) == myProfile.myAddrString():
                 print("I own this.")
                 fileSize = recvInt(peerConn)
@@ -194,10 +194,61 @@ def handlePeer(peerInfo):
             key = recvKey(peerConn)
             owner = owns(key)
             #do a pulse check here
+
             ownerList = owner.split(":")
             ownerIP = ownerList[0]
-            ownerPort = ownerList[1]
+            ownerPort = int(ownerList[1])
             sendAddress(peerConn, (ownerIP, ownerPort))
+
+        elif conMsg == "GET":
+            key = recvKey(peerConn)
+            print("Key to Get: " + str(key))
+
+            if owns(key) == myProfile.myAddrString():
+                print("in get")
+                peerConn.send("T".encode())
+                try:
+                    f = open("repo/"+str(key), "rb")
+                    print("reading file")
+                    fileToSend = f.read()
+                    sendVal(peerConn, fileToSend)
+                    f.close()
+                except:
+                    peerConn.send("F".encode())
+            else:
+                peerConn.send("N".encode())
+
+        elif conMsg == "EXI":
+            key = recvKey(peerConn)
+
+            if owns(key) == myProfile.myAddrString():
+                try:
+                    f=open("repo/"+str(key), "rb")
+                    peerConn.send("T".encode())
+                except:
+                    peerConn.send("F".encode())
+            else:
+                peerConn.send("N".encode())
+
+        elif conMsg == "REM":
+            key = recvKey(peerConn)
+            keyStr = str(key)
+
+            if owns(key) == myProfile.myAddrString():
+                try:
+                    f=open("repo/"+keyStr, "rb")
+                    os.remove("repo/"+keyStr)
+                    if not (os.path.exists("repo/"+keyStr)):
+                        peerConn.send("T".encode())
+                except:
+                    peerConn.send("F".encode())
+            else:
+                peerConn.send("N".encode())
+
+        elif conMsg == "PUL":
+            peerConn.send("T".encode())
+
+
 
         conMsg = recvAll(peerConn, 3)
         try:
@@ -376,7 +427,9 @@ elif len(sys.argv) == 3:
 
             elif userInput == "5":
                 k = input("Enter a key")
-            
+                ##OWNS##
+                request_owns(peerConn)
+                
             userInput = input("Command?\n")
     else:
         pass
