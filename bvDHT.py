@@ -24,6 +24,7 @@ def owns(number):
     hashes.sort(reverse=True)
     for i in range(len(hashes)):
         if number >= hashes[i]:
+            return myProfile.fingerTable[hashes[i]]
 
     return myProfile.fingerTable[hashes[0]]
 
@@ -63,27 +64,87 @@ def insertFile(peerConn):
         print("Something went wrong with your destination storage.")
         return
     
-def getFile(peerConn, key):
+def getFile(peerConn):
+    ''' Retrieves data in the DHT. '''
+
     peerConn.send("GET".encode())
 
-    #sendAddress(peerConn, #hash keyhere))
+    # Collect what the user wants from the hash table
+    what = input("What is the name of the thing you want? ")
+    hashed_key = int.from_bytes(hashlib.sha1(what.encode()).digest(), byteorder="big")
+    sendKey(peerConn, hashed_key)
+
+    # Receive peer response #
     tf = recvAll(peerConn, 1)
     tf = tf.decode()
+    print("Receiving from peer",tf)
     if tf == "T":
-        length = recvInt(peerConn)
+        print("Got a T..waiting on file.")
         data = recvVal(peerConn)
+        with open("repo/"+str(hashed_key), 'wb') as f:
+            f.write(data)
+        print("Received the data.")
     elif tf == "F":
         print("Data not found")
     elif tf == "N":
         print("Peer doesn't own this space")
         #rerun owns on the key
+    else:
+        print("IDK what happened.")
 
-    
+    return
 
+def getExists(peerConn):
+    ''' Checks if a file exists in the DHT. '''
 
-    sendInt(peerConn, len(value))
-    peerConn.send(value.encode())
+    peerConn.send("EXI".encode())
 
+    # Collect what the user wants from the hash table
+    what = input("What is the name of the thing you want to check for? ")
+    hashed_key = int.from_bytes(hashlib.sha1(what.encode()).digest(), byteorder="big")
+    sendKey(peerConn, hashed_key)
+
+    # Receive peer response #
+    tf = recvAll(peerConn, 1)
+    tf = tf.decode()
+    print("Receiving from peer",tf)
+    if tf == "T":
+        print("Got a T, they have it")
+    elif tf == "F":
+        print("Data not found")
+    elif tf == "N":
+        print("Peer doesn't own this space")
+        #rerun owns on the key
+    else:
+        print("IDK what happened.")
+
+    return
+
+def removeKey(peerConn):
+    ''' Removes an item from the distributed hash table. '''
+
+    peerConn.send("REM".encode())
+
+    # Collect what the user wants from the hash table
+    what = input("What is the name of the thing you want to delete? ")
+    hashed_key = int.from_bytes(hashlib.sha1(what.encode()).digest(), byteorder="big")
+    sendKey(peerConn, hashed_key)
+
+    # Receive peer response #
+    tf = recvAll(peerConn, 1)
+    tf = tf.decode()
+    print("Receiving from peer",tf)
+    if tf == "T":
+        print("Got a T, they removed it")
+    elif tf == "F":
+        print("Data not found")
+    elif tf == "N":
+        print("Peer doesn't own this space")
+        #rerun owns on the key
+    else:
+        print("IDK what happened.")
+
+    return
 
 #################
 # Peer handling #
@@ -181,13 +242,25 @@ def handlePeer(peerInfo):
             print("MY NAME: " + myProfile.myAddrString())
 
             if owns(fileName) == myProfile.myAddrString():
-                peerConn.send("T".encode())
+                print("I own this.")
                 fileSize = recvInt(peerConn)
                 fileContent = recvAll(peerConn, fileSize)
+                peerConn.send("T".encode())
                 print("FILE: " + str(fileContent))
-                f = open('repo/' + str(fileName), 'w')
+                f = open('repo/' + str(fileName), 'wb')
+                f.write(fileContent)
+                f.close()
             else:
                 peerConn.send("N".encode())
+
+        elif conMsg == "OWN":
+            key = recvKey(peerConn)
+            owner = owns(key)
+            #do a pulse check here
+            ownerList = owner.split(":")
+            ownerIP = ownerList[0]
+            ownerPort = int(ownerList[1])
+            sendAddress(peerConn, (ownerIP, ownerPort))
 
         conMsg = recvAll(peerConn, 3)
         try:
@@ -195,6 +268,10 @@ def handlePeer(peerInfo):
             print(conMsg)
         except:
             pass
+
+            
+
+
 
 
 def waitForPeerConnections(listener):
@@ -325,8 +402,15 @@ elif len(sys.argv) == 3:
             print("Received zero")
             # Send peer we acknowledge we are supposed to receive nothing
             peerConn.send("T".encode())
-        for i in range(numItems):
-            print("Receiving file..")
+        else:
+            for i in range(numItems):
+                print("Receiving file..")
+                key = recvKey(peerConn)
+                data = recvVal(peerConn)
+                # Write the data to file
+                with open("repo/"+str(key), 'wb') as f:
+                    f.write(data)
+            peerConn.send("T".encode())
         # End connection protocol #
 
         # Initializing my peer profile
@@ -356,13 +440,25 @@ elif len(sys.argv) == 3:
                 ##INSERT##
                 insertFile(peerConn)
 
+            elif userInput == "2":
+                ##REMOVE##
+                removeKey(peerConn)
+
             elif userInput == "3":
                 ##GET##
                 getFile(peerConn)
 
+            elif userInput == "4":
+                ##EXISTS##
+                getExists(peerConn)
+
             elif userInput == "5":
                 ##OWNS##
                 request_owns(peerConn)
+            
+            else:
+                ##BOGUS##
+                print("What?")
                 
             userInput = input("Command?\n")
     else:
