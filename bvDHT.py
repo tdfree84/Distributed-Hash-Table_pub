@@ -26,19 +26,20 @@ def owns(number):
     for i in range(len(hashes)):
         if number >= hashes[i]:
             #Establish connection to person we find
-            conn = socket(AF_INET, SOCK_STREAM)
-            connIPort = myProfile.fingerTable[hashes[i]].split(":")
-            connIP = connIPort[0]
-            connPort = int(connIPort[1])
-            try:
-                conn.connect((connIP, connPort))
-                conn.send("PUL".encode())
-                t = recvAll(conn, 1)
-                if t == "T":
-                    return myProfile.fingerTable[hashes[i]]
-            except:
-                del myProfile.fingerTable[hashes[i]]
-                return owns(number)
+            if myProfile.fingerTable[hashes[i]] != myProfile.myAddrString():
+                conn = socket(AF_INET, SOCK_STREAM)
+                connIPort = myProfile.fingerTable[hashes[i]].split(":")
+                connIP = connIPort[0]
+                connPort = int(connIPort[1])
+                try:
+                    conn.connect((connIP, connPort))
+                    conn.send("PUL".encode())
+                    t = recvAll(conn, 1)
+                    if t == "T":
+                        return myProfile.fingerTable[hashes[i]]
+                except:
+                    del myProfile.fingerTable[hashes[i]]
+                    return owns(number)
 
     return myProfile.fingerTable[hashes[0]]
 
