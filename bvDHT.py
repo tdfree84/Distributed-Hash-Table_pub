@@ -27,29 +27,31 @@ def owns(number):
             #Establish connection to person we find
             print(myProfile.fingerTable[hashes[i]])
             print(myProfile.myAddrString())
-            if myProfile.fingerTable[hashes[i]] != myProfile.myAddrString():
-                conn = socket(AF_INET, SOCK_STREAM)
-                connIPort = myProfile.fingerTable[hashes[i]].split(":")
-                connIP = connIPort[0]
-                connPort = int(connIPort[1])
-                try:
-                    conn.connect((connIP, connPort))
-                    conn.send("PUL".encode())
-                except:
-                    conn.close()
-                    del myProfile.fingerTable[hashes[i]]
-                    if i-1 >= 0:
-                        return myProfile.fingerTable[hashes[i-1]]
-                    else:
-                        return myProfile.myAddrString()
-
-                t = recvAll(conn, 1)
-                t = t.decode()
-                if t == "T":
-                    conn.close()
-                    return myProfile.fingerTable[hashes[i]]
-            else:
+            if myProfile.fingerTable[hashes[i]] == myProfile.myAddrString():
                 return myProfile.myAddrString()
+
+            conn = socket(AF_INET, SOCK_STREAM)
+            connIPort = myProfile.fingerTable[hashes[i]].split(":")
+            connIP = connIPort[0]
+            connPort = int(connIPort[1])
+            try:
+                conn.connect((connIP, connPort))
+                conn.send("PUL".encode())
+            except:
+                conn.close()
+                del myProfile.fingerTable[hashes[i]]
+                if i-1 >= 0:
+                    return myProfile.fingerTable[hashes[i-1]]
+                else:
+                    return myProfile.myAddrString()
+
+            t = recvAll(conn, 1)
+            t = t.decode()
+            if t == "T":
+                conn.close()
+                return myProfile.fingerTable[hashes[i]]
+
+            conn.close()
 
     return myProfile.fingerTable[hashes[0]]
 
@@ -334,7 +336,8 @@ def handlePeer(peerInfo):
 
         elif conMsg == "PUL":
             peerConn.send("T".encode())
-
+            peerConn.close()
+            break
 
 
         conMsg = recvAll(peerConn, 3)
