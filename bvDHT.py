@@ -24,7 +24,20 @@ def owns(number):
     hashes.sort(reverse=True)
     for i in range(len(hashes)):
         if number >= hashes[i]:
-            return myProfile.fingerTable[hashes[i]]
+            #Establish connection to person we find
+            conn = socket(AF_INET, SOCK_STREAM)
+            connIPort = myProfile.fingerTable[hashes[i]].split(":")
+            connIP = connIPort[0]
+            connPort = int(connIPort[1])
+            try:
+                conn.connect((connIP, connPort))
+                conn.send("PUL".encode())
+                t = recvAll(conn, 1)
+                if t == "T":
+                    return myProfile.fingerTable[hashes[i]]
+            except:
+                del myProfile.fingerTable[hashes[i]]
+                return owns(number)
 
     return myProfile.fingerTable[hashes[0]]
 
@@ -66,7 +79,6 @@ def insertFile(peerConn):
     
 def getFile(peerConn):
     ''' Retrieves data in the DHT. '''
-
     peerConn.send("GET".encode())
 
     # Collect what the user wants from the hash table
