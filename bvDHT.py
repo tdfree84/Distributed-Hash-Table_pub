@@ -10,7 +10,7 @@ from net_functions import *
 from hash_functions import *
 from peerProfile import *
 
-menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\n"
+menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\nChoose 7 for: finger table."
 
 
 ####################
@@ -40,10 +40,11 @@ def owns(number):
             except:
                 conn.close()
                 del myProfile.fingerTable[hashes[i]]
-                if i-1 >= 0:
-                    return myProfile.fingerTable[hashes[i-1]]
-                else:
-                    return myProfile.myAddrString()
+                return owns(number)
+               #if i-1 >= 0:
+               #    return myProfile.fingerTable[hashes[i-1]]
+               #else:
+               #    return myProfile.myAddrString()
 
             t = recvAll(conn, 1)
             t = t.decode()
