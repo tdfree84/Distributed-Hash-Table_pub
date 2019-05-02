@@ -78,8 +78,19 @@ def insertFile(peerConn):
     whoisit = owns(hashed_key)
     print("This person owns it:",whoisit)
 
-    # Begin sending file
+    # Send peer key of our data
     sendKey(peerConn, int(hashed_key)) # Send them our data's hashed key
+
+    tf = recvAll(peerConn, 1) # Wait for them to respond
+    tf = tf.decode()
+    print("Receiving back from peer:",str(tf))
+    if tf == "T":
+        pass
+    else:
+        print("Something went wrong with your destination storage.")
+        return
+
+    # Send data if we can
     sendVal(peerConn, value.encode())  # Send them the data
 
     tf = recvAll(peerConn, 1) # Wait for them to respond
@@ -90,6 +101,8 @@ def insertFile(peerConn):
     else:
         print("Something went wrong with your destination storage.")
         return
+
+    return
     
 def getFile(peerConn):
     ''' Retrieves data in the DHT. '''
