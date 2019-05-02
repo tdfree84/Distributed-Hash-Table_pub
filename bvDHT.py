@@ -22,7 +22,6 @@ def owns(number):
 
     hashes = list(myProfile.fingerTable.keys())
     hashes.sort(reverse=True)
-    #print("Number: " + str(number))
     for i in range(len(hashes)):
         if number >= hashes[i]:
             #Establish connection to person we find
@@ -264,21 +263,28 @@ def handlePeer(peerInfo):
             #################
             fileName = recvKey(peerConn)
             o = owns(fileName)
+
+            #if we own the space, send positive confirmation
+            if o == myProfile.myAddrString():
+                peerConn.send("T".encode())
+            else:
+                peerConn.send("N".encode())
+
             print("PEERNAME :" + o)
             print("FILENAME: " + str(fileName))
             print("MY NAME: " + myProfile.myAddrString())
 
-            if owns(fileName) == myProfile.myAddrString():
+            try:
                 print("I own this.")
                 fileSize = recvInt(peerConn)
                 fileContent = recvAll(peerConn, fileSize)
-                peerConn.send("T".encode())
                 print("FILE: " + str(fileContent))
                 f = open('repo/' + str(fileName), 'wb')
                 f.write(fileContent)
                 f.close()
-            else:
-                peerConn.send("N".encode())
+                peerConn.send("T".encode())
+            except:
+                peerConn.send("F".encode())
 
         elif conMsg == "OWN":
             key = recvKey(peerConn)
@@ -339,8 +345,6 @@ def handlePeer(peerInfo):
             peerConn.send("T".encode())
             peerConn.close()
             break
-
-
 
         conMsg = recvAll(peerConn, 3)
         try:
