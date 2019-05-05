@@ -181,6 +181,65 @@ def removeKey(peerConn):
 
     return
 
+
+def doDisconnect(peerConn):
+    ''' Disconncet from the DHT.  '''
+    
+    peerConn.send("DIS".encode())
+    sendAddress(myProfile.myAddress)
+
+    # Receive peer response #
+    tf = recvAll(peerConn, 1)
+    tf = tf.decode()
+    print("Receiving from peer",tf)
+    if tf == "T":
+        print("Got a T, they are ready for us to disconnect")
+    elif tf == "N":
+        print("Peer doesn't own this space")
+        return
+        #rerun owns on the key
+    else:
+        print("IDK what happened.")
+        return
+        
+    s = myProfile.successor.split(':')
+    sendAddress((s[0], int(s[1])))
+
+    #send the number of items from their hash
+    #get file names from repo
+    fNameList = os.listdir('repo')
+    listToSend = []
+    for n in fNameList:
+        nInt = int(n)
+        if nInt < getHashIndex((successorIP, int(successorPort))) and nInt > getHashIndex((peerIP, int(peerPort))):
+            listToSend.append(n)
+
+    sendInt(peerConn, len(listToSend))
+
+    #for number of items, send [key][valSize][val] to peer
+    for n in listToSend:
+        f = open('repo/' + n, 'rb')
+        fBytes = f.read()
+        sendKey(peerConn, int(n))
+        sendVal(peerConn, fBytes) 
+        f.close()
+
+    # Receive peer response #
+    tf = recvAll(peerConn, 1)
+    tf = tf.decode()
+    print("Receiving from peer",tf)
+    if tf == "T":
+        print("Got a T, they accepted everything")
+    else:
+        print("IDK what happened.")
+        return
+    
+    # Fully disconnect
+    print("bye")
+    sys.exit(0)
+
+
+
 ######################
 # Helper function(s) #
 ######################
@@ -625,7 +684,11 @@ elif len(sys.argv) == 3:
             elif userInput == "5":
                 ##OWNS##
                 request_owns(peerConn)
-            
+
+            elif userInput == "6":
+                ##DISCONNET##
+                doDisconnect(peerConn)
+
             else:
                 ##BOGUS##
                 print("What?")
