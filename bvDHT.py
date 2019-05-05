@@ -275,7 +275,7 @@ def handlePeer(peerInfo):
     conMsg = recvAll(peerConn, 3)
     conMsg = conMsg.decode()
     print(conMsg)
-    while conMsg != "DIS":
+    while True:
         if conMsg == "CON":
             peerIP, peerPort = recvAddress(peerConn)
             print(peerIP + ":" + str(peerPort))
@@ -295,11 +295,7 @@ def handlePeer(peerInfo):
 
                 #put fingertable function in right here
                 makeFingerTable(randKeyRange)
-
-               # myProfile.fingerTable = fingerTable
                 print("My finger table is",myProfile.fingerTable)
-
-
 
                 #send the address of our successor
                 successor = myProfile.successor.split(":")
@@ -340,6 +336,57 @@ def handlePeer(peerInfo):
                 #send this if we don't own the space they want
                 print("N")
                 peerConn.send("N".encode())
+        elif conMsg == "DIS":
+            peerAddr = owns(recvAddress(peerConn))
+            if owns(getHashIndex((peerAddr))) == myProfile.myAddrString():
+                #####################
+                #DISCONNECT PROTOCOL#
+                #####################
+
+                #sending them a T if we own they space they want
+                print("T\n")
+                peerConn.send('T'.encode())
+                #update our fingertable
+                fingerTable = {}
+                fingerTable[getHashIndex((peerIP,peerPort))] = str(peerIP + ":" +str(peerPort))
+                fingerTable[getHashIndex(myProfile.myAddress)] = myProfile.myAddrString()
+
+
+                #receive address of our new successor
+                successor = recvAddress(peerConn)
+                successorIP = successor[0]
+                successorPort = successor[1]
+
+                numItems = recvInt(peerConn)
+
+                for n in range(numItems):
+                    try:
+                        k = recvKey(peerConn)
+                        data = recvVal(peerConn)
+                        f = open('repo/' + k, 'wb')
+                        f.write(data)
+                        f.close()
+                    except:
+                        print("Failed to write some data when peer was disconnecting")
+                        break
+                
+                peerConn.send("T".encode())
+                peerConn.close()
+
+                #update our info
+                myProfile.successor = successorIP + ":" + str(successorPort)
+                #put fingertable function in right here to update table
+                makeFingerTable(randKeyRange)
+                print("My finger table is",myProfile.fingerTable)
+
+                break
+
+            else:
+                #send this if we don't own the space they want
+                print("N")
+                peerConn.send("N".encode())
+
+
 
         elif conMsg == "INS":
             #################
@@ -441,9 +488,7 @@ def handlePeer(peerInfo):
         except:
             pass
 
-            
-
-
+    return
 
 
 def waitForPeerConnections(listener):
