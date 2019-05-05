@@ -10,7 +10,7 @@ from net_functions import *
 from hash_functions import *
 from peerProfile import *
 
-menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\n"
+menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\nChoose 7 for: finger table."
 
 
 ####################
@@ -181,6 +181,28 @@ def removeKey(peerConn):
 
     return
 
+######################
+# Helper function(s) #
+######################
+
+def makeFingerTable(randKeyRange):
+    fingerTable = {}
+    fingerTable[getHashIndex(myProfile.myAddress)] = myProfile.myAddrString()
+    offset = randKeyRange
+    for i in range(5):
+        who = owns(offset)
+        print("Owns: ",who)
+        who_spl = who.split(':')
+        who_tup = (who_spl[0],int(who_spl[1]))
+        #fingerTable[getHashIndex(who_tup)] = who
+        fingerTable[offset] = who
+        offset += randKeyRange
+
+    myProfile.fingerTable = fingerTable
+
+
+
+
 #################
 # Peer handling #
 #################
@@ -194,7 +216,7 @@ def handlePeer(peerInfo):
     conMsg = recvAll(peerConn, 3)
     conMsg = conMsg.decode()
     print(conMsg)
-    while conMsg != "DIS":
+    while True:
         if conMsg == "CON":
             peerIP, peerPort = recvAddress(peerConn)
             print(peerIP + ":" + str(peerPort))
@@ -214,20 +236,7 @@ def handlePeer(peerInfo):
 
                 #put fingertable function in right here
                 makeFingerTable(randKeyRange)
-               #for i in range(5):
-               #    randKeyRange = random.randint(0, keySpaceRanges)
-               #    who = owns(randKeyRange)
-               #    print("Owns: ",who)
-               #    who_spl = who.split(':')
-               #    who_tup = (who_spl[0],int(who_spl[1]))
-               #    #fingerTable[getHashIndex(who_tup)] = who
-               #    fingerTable[randKeyRange] = who
-               #    randKeyRange += randKeyRange
-
-               # myProfile.fingerTable = fingerTable
                 print("My finger table is",myProfile.fingerTable)
-
-
 
                 #send the address of our successor
                 successor = myProfile.successor.split(":")
@@ -268,6 +277,57 @@ def handlePeer(peerInfo):
                 #send this if we don't own the space they want
                 print("N")
                 peerConn.send("N".encode())
+        elif conMsg == "DIS":
+            peerAddr = owns(recvAddress(peerConn))
+            if owns(getHashIndex((peerAddr))) == myProfile.myAddrString():
+                #####################
+                #DISCONNECT PROTOCOL#
+                #####################
+
+                #sending them a T if we own they space they want
+                print("T\n")
+                peerConn.send('T'.encode())
+                #update our fingertable
+                fingerTable = {}
+                fingerTable[getHashIndex((peerIP,peerPort))] = str(peerIP + ":" +str(peerPort))
+                fingerTable[getHashIndex(myProfile.myAddress)] = myProfile.myAddrString()
+
+
+                #receive address of our new successor
+                successor = recvAddress(peerConn)
+                successorIP = successor[0]
+                successorPort = successor[1]
+
+                numItems = recvInt(peerConn)
+
+                for n in range(numItems):
+                    try:
+                        k = recvKey(peerConn)
+                        data = recvVal(peerConn)
+                        f = open('repo/' + k, 'wb')
+                        f.write(data)
+                        f.close()
+                    except:
+                        print("Failed to write some data when peer was disconnecting")
+                        break
+                
+                peerConn.send("T".encode())
+                peerConn.close()
+
+                #update our info
+                myProfile.successor = successorIP + ":" + str(successorPort)
+                #put fingertable function in right here to update table
+                makeFingerTable(randKeyRange)
+                print("My finger table is",myProfile.fingerTable)
+
+                break
+
+            else:
+                #send this if we don't own the space they want
+                print("N")
+                peerConn.send("N".encode())
+
+
 
         elif conMsg == "INS":
             #################
@@ -362,7 +422,6 @@ def handlePeer(peerInfo):
             sendVal(peerConn, fingerString)
 
 
-
         conMsg = recvAll(peerConn, 3)
         try:
             conMsg = conMsg.decode()
@@ -370,9 +429,7 @@ def handlePeer(peerInfo):
         except:
             pass
 
-            
-
-
+    return
 
 
 def waitForPeerConnections(listener):
@@ -425,15 +482,16 @@ if len(sys.argv) == 1:
     # Initializing my peer profile
     myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,addr,addr)
 
-    offset = randKeyRange
-    for i in range(5):
-        who = owns(offset)
-        print("Owns: ",who)
-        who_spl = who.split(':')
-        who_tup = (who_spl[0],int(who_spl[1]))
-        #fingerTable[getHashIndex(who_tup)] = who
-        fingerTable[offset] = who
-        offset += randKeyRange
+    makeFingerTable(randKeyRange)
+   #offset = randKeyRange
+   #for i in range(5):
+   #    who = owns(offset)
+   #    print("Owns: ",who)
+   #    who_spl = who.split(':')
+   #    who_tup = (who_spl[0],int(who_spl[1]))
+   #    #fingerTable[getHashIndex(who_tup)] = who
+   #    fingerTable[offset] = who
+   #    offset += randKeyRange
 
     myProfile.fingerTable = fingerTable
     print("My finger table is",myProfile.fingerTable)
@@ -527,15 +585,16 @@ elif len(sys.argv) == 3:
         # Initializing my peer profile
         myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,peerSuccessor,peerSuccessor)
 
-        offset = randKeyRange
-        for i in range(5):
-            who = owns(offset)
-            #print("Owns: ",who)
-            who_spl = who.split(':')
-            who_tup = (who_spl[0],int(who_spl[1]))
-            #fingerTable[getHashIndex(who_tup)] = who
-            fingerTable[offset] = who
-            offset += randKeyRange
+        makeFingerTable(randKeyRange)
+       #offset = randKeyRange
+       #for i in range(5):
+       #    who = owns(offset)
+       #    #print("Owns: ",who)
+       #    who_spl = who.split(':')
+       #    who_tup = (who_spl[0],int(who_spl[1]))
+       #    #fingerTable[getHashIndex(who_tup)] = who
+       #    fingerTable[offset] = who
+       #    offset += randKeyRange
 
         myProfile.fingerTable = fingerTable
         print("My finger table is",myProfile.fingerTable)
