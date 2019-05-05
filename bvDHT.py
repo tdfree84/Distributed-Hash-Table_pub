@@ -181,12 +181,11 @@ def removeKey(peerConn):
 
     return
 
-
 def doDisconnect(peerConn):
     ''' Disconncet from the DHT.  '''
     
     peerConn.send("DIS".encode())
-    sendAddress(myProfile.myAddress)
+    sendAddress(peerConn, myProfile.myAddress)
 
     # Receive peer response #
     tf = recvAll(peerConn, 1)
@@ -203,7 +202,7 @@ def doDisconnect(peerConn):
         return
         
     s = myProfile.successor.split(':')
-    sendAddress((s[0], int(s[1])))
+    sendAddress(peerConn, (s[0], int(s[1])))
 
     #send the number of items from their hash
     #get file names from repo
@@ -288,13 +287,10 @@ def handlePeer(peerInfo):
                 #sending them a T if we own they space they want
                 print("T\n")
                 peerConn.send('T'.encode())
-                #update our fingertable
-                fingerTable = {}
-                fingerTable[getHashIndex((peerIP,peerPort))] = str(peerIP + ":" +str(peerPort))
-                fingerTable[getHashIndex(myProfile.myAddress)] = myProfile.myAddrString()
 
                 #put fingertable function in right here
                 makeFingerTable(randKeyRange)
+                myProfile.fingerTable[getHashIndex((peerIP,peerPort))] = str(peerIP + ":" +str(peerPort))
                 print("My finger table is",myProfile.fingerTable)
 
                 #send the address of our successor
@@ -552,7 +548,6 @@ if len(sys.argv) == 1:
    #    fingerTable[offset] = who
    #    offset += randKeyRange
 
-    myProfile.fingerTable = fingerTable
     print("My finger table is",myProfile.fingerTable)
 
 
@@ -655,7 +650,6 @@ elif len(sys.argv) == 3:
        #    fingerTable[offset] = who
        #    offset += randKeyRange
 
-        myProfile.fingerTable = fingerTable
         print("My finger table is",myProfile.fingerTable)
 
         #recv all protocol messages from peer we connected to
