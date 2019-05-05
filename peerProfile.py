@@ -14,9 +14,7 @@ class PeerProfile:
 
     '''
 
-    def __init__(self, _myAddr, _minHash, _maxHash, _fingerTable, _successor, _predecessor):
-        self.minHash = _minHash
-        self.maxHash = _maxHash
+    def __init__(self, _myAddr,_fingerTable, _successor, _predecessor):
         self.fingerTable = _fingerTable
         self.successor = _successor
         self.predecessor = _predecessor
@@ -24,3 +22,15 @@ class PeerProfile:
 
     def myAddrString(self):
         return self.myAddress[0]+":"+str(self.myAddress[1])
+
+    def serialize(self):
+        inf = ''
+        inf += "address " + self.myAddrString() + "\n"
+
+        for f in self.fingerTable:
+                inf += str(f) + ": "
+                inf += self.fingerTable[f] + "\n"
+
+        inf += self.successor + "\n"
+        return inf
+
