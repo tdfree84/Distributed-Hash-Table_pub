@@ -182,12 +182,11 @@ def removeKey(peerConn):
 
     return
 
-
 def doDisconnect(peerConn):
     ''' Disconncet from the DHT.  '''
     
     peerConn.send("DIS".encode())
-    sendAddress(myProfile.myAddress)
+    sendAddress(peerConn, myProfile.myAddress)
 
     # Receive peer response #
     tf = recvAll(peerConn, 1)
@@ -204,7 +203,7 @@ def doDisconnect(peerConn):
         return
         
     s = myProfile.successor.split(':')
-    sendAddress((s[0], int(s[1])))
+    sendAddress(peerConn, (s[0], int(s[1])))
 
     #send the number of items from their hash
     #get file names from repo
