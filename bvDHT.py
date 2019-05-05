@@ -233,19 +233,11 @@ def handlePeer(peerInfo):
                 fingerTable = {}
                 fingerTable[getHashIndex((peerIP,peerPort))] = str(peerIP + ":" +str(peerPort))
                 fingerTable[getHashIndex(myProfile.myAddress)] = myProfile.myAddrString()
-                
-                # Making the fingerTable
-                offset = randKeyRange
-                for i in range(5):
-                    who = owns(offset)
-                    print("Owns: ",who)
-                    who_spl = who.split(':')
-                    who_tup = (who_spl[0],int(who_spl[1]))
-                    #fingerTable[getHashIndex(who_tup)] = who
-                    fingerTable[offset] = who
-                    offset += randKeyRange
 
-                myProfile.fingerTable = fingerTable
+                #put fingertable function in right here
+                makeFingerTable(randKeyRange)
+
+               # myProfile.fingerTable = fingerTable
                 print("My finger table is",myProfile.fingerTable)
 
 
@@ -378,13 +370,8 @@ def handlePeer(peerInfo):
             peerConn.close()
             break
 
-        elif conMsg == "FIN":
-            fingerString = ''
-
-            for f in myProfile.fingerTable:
-                fingerString += str(f) + ": "
-                fingerString += myProfile.fingerTable[f] + "\n"
-
+        elif conMsg == "INF":
+            fingerString = myProfile.serialize()
             sendVal(peerConn, fingerString)
 
 
@@ -432,7 +419,6 @@ keySpaceRanges = 2**160/5
 #get random number in keyRange for offset
 randKeyRange = random.randint(0, keySpaceRanges)
 #all the keyspace we own
-myKeySpaceRange = [0,0]
 # THIS client's profile
 myProfile = ''
 
@@ -447,12 +433,9 @@ if len(sys.argv) == 1:
 
     print(menu)
     ourHash = getHashIndex((getLocalIPAddress(), int(port)))
-    myKeySpaceRange[0] = ourHash
-    myKeySpaceRange[1] = ourHash-1
-    #print(myKeySpaceRange)
 
     # Initializing my peer profile
-    myProfile = PeerProfile((getLocalIPAddress(),int(port)),myKeySpaceRange[0],myKeySpaceRange[1],fingerTable,addr,addr)
+    myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,addr,addr)
 
     makeFingerTable(randKeyRange)
    #offset = randKeyRange
@@ -532,8 +515,6 @@ elif len(sys.argv) == 3:
         
         # Set our keyspace (THIS IS WRONG AND NEES TO CHANGE)
         ourHash = getHashIndex((getLocalIPAddress(), int(port)))
-        myKeySpaceRange[0] = ourHash
-        myKeySpaceRange[1] = ourHash-1
         
         # Finish out rest of connection protocol after we have the ok to continue #
         peerSuccessor = recvAddress(peerConn)
@@ -557,7 +538,7 @@ elif len(sys.argv) == 3:
         # End connection protocol #
 
         # Initializing my peer profile
-        myProfile = PeerProfile((getLocalIPAddress(),int(port)),myKeySpaceRange[0],myKeySpaceRange[1],fingerTable,peerSuccessor,peerSuccessor)
+        myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,peerSuccessor,peerSuccessor)
 
         makeFingerTable(randKeyRange)
        #offset = randKeyRange
