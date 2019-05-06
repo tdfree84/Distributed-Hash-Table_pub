@@ -34,7 +34,7 @@ def trueOwner(number):
         sendKey(conn, number)
 
         returned_peer = recvAddress(conn)
-        returned_peer = returned_peer[0] + ":" + str(returned_peer[1])   
+        returned_peer = returned_peer[0] + ":" + str(returned_peer[1])
         temp = returned_peer
         print("They answered:",returned_peer)
         conn.close()
@@ -317,7 +317,8 @@ def handlePeer(peerInfo):
     while True:
         conMsg = recvAll(peerConn, 3)
         conMsg = conMsg.decode()
-        print(conMsg)
+        if conMsg!='' and conMsg!='\n' and conMsg != ' ':
+            print(conMsg)
         if conMsg == "CON":
             peerIP, peerPort = recvAddress(peerConn)
             print("THIS PERSON IS CONNECTING: " + peerIP + ":" + str(peerPort))
