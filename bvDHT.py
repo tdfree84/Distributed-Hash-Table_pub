@@ -25,8 +25,8 @@ def trueOwner(number):
     while candidate != returned_peer: 
         candidate = temp
         print("Calling:",candidate)
-        conn = socket(AF_INT, SOCK_STREAM)
-        connIPort = candidate.split(':')[0]
+        conn = socket(AF_INET, SOCK_STREAM)
+        connIP = candidate.split(':')[0]
         connPort = int(candidate.split(':')[1])
 
         conn.connect((connIP, connPort))
@@ -34,6 +34,7 @@ def trueOwner(number):
         sendKey(conn, number)
 
         returned_peer = recvAddress(conn)
+        returned_peer = returned_peer[0] + ":" + str(returned_peer[1])   
         temp = returned_peer
         print("They answered:",returned_peer)
         conn.close()
@@ -409,7 +410,7 @@ def handlePeer(peerInfo):
             o = owns(getHashIndex( (peerAddr[0], peerAddr[1]-1)))
             print(o)
             print(myProfile.myAddrString())
-            if trueOwner(getHashIndex((peerAddr[0], peerAddr[1]-1))== myProfile.myAddrString():
+            if trueOwner(getHashIndex((peerAddr[0], peerAddr[1]-1))) == myProfile.myAddrString():
                 #####################
                 #DISCONNECT PROTOCOL#
                 #####################
@@ -679,12 +680,13 @@ elif len(sys.argv) == 3:
     peerPort = int(peer[1])
     peerConn.close()
 
+    peerConn = socket(AF_INET, SOCK_STREAM)
     peerConn.connect( (peerIP, peerPort) )
 
     #send the client we connected to our connection protocol
     peerConn.send("CON".encode())
 
-    sendAddress(peerConn, peerAddress)
+    sendAddress(peerConn, myAddress)
 
     tf = recvAll(peerConn, 1)
     tf = tf.decode()
