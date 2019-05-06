@@ -121,6 +121,7 @@ def insertFile(peerConn):
         pass
     else:
         print("Something went wrong with your destination storage.")
+        insConn.close()
         return
 
     # Send data if we can
@@ -133,26 +134,38 @@ def insertFile(peerConn):
         print("all went good.")
     else:
         print("Something went wrong with your destination storage.")
+        insConn.close()
         return
 
+    insConn.close()
     return
     
 def getFile(peerConn):
     ''' Retrieves data in the DHT. '''
-    peerConn.send("GET".encode())
 
     # Collect what the user wants from the hash table
     what = input("What is the name of the thing you want? ")
     hashed_key = int.from_bytes(hashlib.sha1(what.encode()).digest(), byteorder="big")
-    sendKey(peerConn, hashed_key)
+
+    whoisit = trueOwner(hashed_key)
+    print("This person owns it:",whoisit)
+    get = whoisit.split(":")
+    getIP = ins[0]
+    getPort = ins[1]
+    getConn = socket(AF_INET, SOCK_STREAM)
+    getConn.connect( (getIP, getPort) )
+
+    getConn.send("GET".encode())
+    sendKey(getConn, hashed_key)
+
 
     # Receive peer response #
-    tf = recvAll(peerConn, 1)
+    tf = recvAll(getConn, 1)
     tf = tf.decode()
     print("Receiving from peer",tf)
     if tf == "T":
         print("Got a T..waiting on file.")
-        data = recvVal(peerConn)
+        data = recvVal(getConn)
         with open("repo/"+str(hashed_key), 'wb') as f:
             f.write(data)
         print("Received the data.")
@@ -164,20 +177,31 @@ def getFile(peerConn):
     else:
         print("IDK what happened.")
 
+    getConn.close()
+
     return
 
 def getExists(peerConn):
     ''' Checks if a file exists in the DHT. '''
 
-    peerConn.send("EXI".encode())
 
     # Collect what the user wants from the hash table
     what = input("What is the name of the thing you want to check for? ")
     hashed_key = int.from_bytes(hashlib.sha1(what.encode()).digest(), byteorder="big")
+
+    whoisit = trueOwner(hashed_key)
+    print("This person owns it:",whoisit)
+    exi = whoisit.split(":")
+    exiIP = ins[0]
+    exiPort = ins[1]
+    exiConn = socket(AF_INET, SOCK_STREAM)
+    exiConn.connect( (exiIP, exiPort) )
+
+    exiConn.send("EXI".encode())
     sendKey(peerConn, hashed_key)
 
     # Receive peer response #
-    tf = recvAll(peerConn, 1)
+    tf = recvAll(exiConn, 1)
     tf = tf.decode()
     print("Receiving from peer",tf)
     if tf == "T":
@@ -190,20 +214,31 @@ def getExists(peerConn):
     else:
         print("IDK what happened.")
 
+    exiConn.close()
+
     return
 
 def removeKey(peerConn):
     ''' Removes an item from the distributed hash table. '''
 
-    peerConn.send("REM".encode())
 
     # Collect what the user wants from the hash table
     what = input("What is the name of the thing you want to delete? ")
     hashed_key = int.from_bytes(hashlib.sha1(what.encode()).digest(), byteorder="big")
-    sendKey(peerConn, hashed_key)
+    
+    whoisit = trueOwner(hashed_key)
+    print("This person owns it:",whoisit)
+    rem = whoisit.split(":")
+    remIP = ins[0]
+    remPort = ins[1]
+    remConn = socket(AF_INET, SOCK_STREAM)
+    remConn.connect( (remIP, remPort) )
+    
+    remConn.send("REM".encode())
+    sendKey(remConn, hashed_key)
 
     # Receive peer response #
-    tf = recvAll(peerConn, 1)
+    tf = recvAll(remConn, 1)
     tf = tf.decode()
     print("Receiving from peer",tf)
     if tf == "T":
@@ -215,6 +250,8 @@ def removeKey(peerConn):
         #rerun owns on the key
     else:
         print("IDK what happened.")
+
+    remConn.close()
 
     return
 
@@ -411,7 +448,7 @@ def handlePeer(peerInfo):
             o = owns(getHashIndex( (peerAddr[0], peerAddr[1]-1)))
             print(o)
             print(myProfile.myAddrString())
-            if trueOwner(getHashIndex((peerAddr[0], peerAddr[1]-1)))== myProfile.myAddrString():
+            if trueOwner(getHashIndex((peerAddr[0], peerAddr[1]-1))) == myProfile.myAddrString():
                 #####################
                 #DISCONNECT PROTOCOL#
                 #####################
