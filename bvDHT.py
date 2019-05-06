@@ -280,6 +280,7 @@ def handlePeer(peerInfo):
         print(conMsg)
         if conMsg == "CON":
             peerIP, peerPort = recvAddress(peerConn)
+            print("THIS PERSON IS CONNECTING: " + peerIP + ":" + str(peerPort))
             print(peerIP + ":" + str(peerPort))
             print(myProfile.myAddrString())
             if owns(getHashIndex((peerIP, peerPort))) == myProfile.myAddrString():
@@ -325,11 +326,14 @@ def handlePeer(peerInfo):
 
                 #receive a T from the client to say everything was received
                 tf = recvAll(peerConn, 1)
+                tf = tf.decode()
                 if tf == 'T':
+
                     #set successor to person who just connected to us
                     #they are now our new successor
                     #once done, we no longer own that keyspace, so update
                     #our keyspace ranges
+                    print("updating SUECCESOOR")
                     myProfile.successor = peerIP + ":" + str(peerPort)
             else:
                 #send this if we don't own the space they want
@@ -396,7 +400,24 @@ def handlePeer(peerInfo):
             o = owns(fileName)
 
             #if we own the space, send positive confirmation
-            if o == myProfile.myAddrString():
+            successor = myProfile.successor.split(":")
+            successorIP = successor[0]
+            successorPort = successor[1]
+
+            print("My Successor Key: " +str(getHashIndex((successorIP, int(successorPort)))))
+            print("File Key:         " + str(fileName))
+            print("My Key:           " + str(getHashIndex(myProfile.myAddress)))
+            print("My successor: " + myProfile.successor)
+            successorHash = getHashIndex((successorIP, int(successorPort)))
+            myHash = getHashIndex(myProfile.myAddress)
+
+
+            #MADE CHANGES TO INSERT, FIXED SUCCESSOR PROBLEM
+            if successorHash < myHash:
+                if fileName >= 0 and fileName< successorHash or fileName >= myHash and fileName< 2**160:
+                    peerConn.send("T".encode())
+            elif fileName >= myHash and fileName < successorHash:
+            #if o == myProfile.myAddrString():
                 peerConn.send("T".encode())
             else:
                 peerConn.send("N".encode())
@@ -536,25 +557,15 @@ if len(sys.argv) == 1:
 
     tf = False
     makeFingerTable(randKeyRange, 0 , 0, tf)
-   #offset = randKeyRange
-   #for i in range(5):
-   #    who = owns(offset)
-   #    print("Owns: ",who)
-   #    who_spl = who.split(':')
-   #    who_tup = (who_spl[0],int(who_spl[1]))
-   #    #fingerTable[getHashIndex(who_tup)] = who
-   #    fingerTable[offset] = who
-   #    offset += randKeyRange
 
     print("My finger table is",myProfile.fingerTable)
-
-
 
     userInput = input("Command?")
     while userInput != "disconnect":
         print("Running")
         print(menu)
 
+    #DOESNT WORK
         if userInput == "1":
             ##INSERT##
             insertFile(peerConn)
@@ -638,16 +649,7 @@ elif len(sys.argv) == 3:
         myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,peerSuccessor,peerSuccessor)
 
         tf = False
-        makeFingerTable(randKeyRange, 0, 0, false)
-       #offset = randKeyRange
-       #for i in range(5):
-       #    who = owns(offset)
-       #    #print("Owns: ",who)
-       #    who_spl = who.split(':')
-       #    who_tup = (who_spl[0],int(who_spl[1]))
-       #    #fingerTable[getHashIndex(who_tup)] = who
-       #    fingerTable[offset] = who
-       #    offset += randKeyRange
+        makeFingerTable(randKeyRange, 0, 0, tf)
 
         print("My finger table is",myProfile.fingerTable)
 
