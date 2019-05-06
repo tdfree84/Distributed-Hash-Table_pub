@@ -17,6 +17,30 @@ menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: ge
 # Helper functions #
 ####################
 
+def trueOwner(number):
+
+    candidate = owns(number)
+    temp = candidate
+    returned_peer = ''
+    while candidate != returned_peer: 
+        candidate = temp
+        print("Calling:",candidate)
+        conn = socket(AF_INT, SOCK_STREAM)
+        connIPort = candidate.split(':')[0]
+        connPort = int(candidate.split(':')[1])
+
+        conn.connect((connIP, connPort))
+        conn.send("OWN".encode())
+        sendKey(conn, number)
+
+        returned_peer = recvAddress(conn)
+        temp = returned_peer
+        print("They answered:",returned_peer)
+        conn.close()
+
+    return temp # If here, temp is the true owner
+
+
 def owns(number):
     ''' Find the closest person to the hash number requested. '''
 
@@ -252,7 +276,7 @@ def makeFingerTable(randKeyRange, peerIP, peerPort, flag):
     fingerTable = {}
     fingerTable[getHashIndex(myProfile.myAddress)] = myProfile.myAddrString()
     if flag == True:
-        fingerTable[getHashIndex((peerIP,peerPort))] = str(peerIP + ":" +str(peerPort))
+        fingerTable[getHashIndex((peerIP,int(peerPort)))] = str(peerIP + ":" +str(peerPort))
     offset = randKeyRange
 
     for i in range(5):
@@ -617,7 +641,8 @@ elif len(sys.argv) == 3:
     tf = recvAll(peerConn, 1)
     tf = tf.decode()
     
-    if(tf == "T"):
+    if tf == "T":
+        print("Received T, good to connect.")
        
         # Gathering info for our profile
         addr = getLocalIPAddress() + ":" + str(port)
