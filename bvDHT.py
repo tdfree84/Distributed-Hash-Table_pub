@@ -50,8 +50,8 @@ def owns(number):
     for i in range(len(hashes)):
         if number >= hashes[i]:
             #Establish connection to person we find
-            print(myProfile.fingerTable[hashes[i]])
-            print(myProfile.myAddrString())
+            #print(myProfile.fingerTable[hashes[i]])
+            #print(myProfile.myAddrString())
             if myProfile.fingerTable[hashes[i]] == myProfile.myAddrString():
                 return myProfile.myAddrString()
 
@@ -107,7 +107,7 @@ def insertFile(peerConn):
     insIP = ins[0]
     insPort = ins[1]
     insConn = socket(AF_INET, SOCK_STREAM)
-    insConn.connect( (insIP, insPort) )
+    insConn.connect( (insIP, int(insPort)) )
 
     insConn.send("INS".encode()) # Tell them we want to insert
 
@@ -150,10 +150,10 @@ def getFile(peerConn):
     whoisit = trueOwner(hashed_key)
     print("This person owns it:",whoisit)
     get = whoisit.split(":")
-    getIP = ins[0]
-    getPort = ins[1]
+    getIP = get[0]
+    getPort = get[1]
     getConn = socket(AF_INET, SOCK_STREAM)
-    getConn.connect( (getIP, getPort) )
+    getConn.connect( (getIP, int(getPort)) )
 
     getConn.send("GET".encode())
     sendKey(getConn, hashed_key)
@@ -192,10 +192,10 @@ def getExists(peerConn):
     whoisit = trueOwner(hashed_key)
     print("This person owns it:",whoisit)
     exi = whoisit.split(":")
-    exiIP = ins[0]
-    exiPort = ins[1]
+    exiIP = exi[0]
+    exiPort = exi[1]
     exiConn = socket(AF_INET, SOCK_STREAM)
-    exiConn.connect( (exiIP, exiPort) )
+    exiConn.connect( (exiIP, int(exiPort)) )
 
     exiConn.send("EXI".encode())
     sendKey(peerConn, hashed_key)
@@ -229,10 +229,10 @@ def removeKey(peerConn):
     whoisit = trueOwner(hashed_key)
     print("This person owns it:",whoisit)
     rem = whoisit.split(":")
-    remIP = ins[0]
-    remPort = ins[1]
+    remIP = rem[0]
+    remPort = rem[1]
     remConn = socket(AF_INET, SOCK_STREAM)
-    remConn.connect( (remIP, remPort) )
+    remConn.connect( (remIP, int(remPort)) )
     
     remConn.send("REM".encode())
     sendKey(remConn, hashed_key)
@@ -322,14 +322,15 @@ def doDisconnect(peerConn):
 ######################
 
 def makeFingerTable(randKeyRange, peerIP, peerPort, flag):
-    fingerTable = {}
-    fingerTable[getHashIndex(myProfile.myAddress)] = myProfile.myAddrString()
-    if flag == True:
+    #fingerTable = {}
+    #fingerTable[getHashIndex(myProfile.myAddress)] = myProfile.myAddrString()
+    #if flag == True:
         fingerTable[getHashIndex((peerIP, int(peerPort)))] = str(peerIP + ":" +str(peerPort))
+
     offset = randKeyRange
 
     for i in range(5):
-        who = owns(offset)
+        who = trueOwner(offset)
         print("Owns: ",who)
         who_spl = who.split(':')
         who_tup = (who_spl[0],int(who_spl[1]))
@@ -395,9 +396,10 @@ def handlePeer(peerInfo):
             #peerConn.send('T'.encode())
             #update our fingertable
             #WE NEED TO PASS UP OUR PEER INFO
-            tf = True
-            makeFingerTable(randKeyRange, peerIP, peerPort, tf)
-            print("My finger table is", myProfile.fingerTable)
+            fingerTable[getHashIndex((peerIP, int(peerPort))] = peerIP + ":" + str(peerPort)
+            #tf = True
+            #makeFingerTable(randKeyRange, peerIP, peerPort, tf)
+            #print("My finger table is", myProfile.fingerTable)
 
             #send the address of our successor
             successor = myProfile.successor.split(":")
@@ -481,8 +483,9 @@ def handlePeer(peerInfo):
                 #update our info
                 myProfile.successor = successorIP + ":" + str(successorPort)
                 #put fingertable function in right here to update table
-                tf = True
-                makeFingerTable(randKeyRange, successorIP, successorPort, tf)
+                fingerTable[getHashIndex((successorIP, int(successorPort))] = successorIP + ":" + int(successorPort)
+                #tf = True
+                #makeFingerTable(randKeyRange, successorIP, successorPort, tf)
                 print("My finger table is",myProfile.fingerTable)
 
                 break
@@ -555,7 +558,7 @@ def handlePeer(peerInfo):
             key = recvKey(peerConn)
             print("Key to Get: " + str(key))
 
-            if owns(key) == myProfile.myAddrString():
+            if trueOwner(key) == myProfile.myAddrString():
                 print("in get")
                 try:
                     f = open("repo/"+str(key), "rb")
@@ -650,7 +653,7 @@ if len(sys.argv) == 1:
     threading.Thread(target=waitForPeerConnections, args = (listener,), daemon=True).start()
     addr = getLocalIPAddress() + ":" + str(port)
     fingerTable[getHashIndex((getLocalIPAddress(), int(port)))] = addr
-    fingerTable[0] = addr
+    #fingerTable[0] = addr
 
     print(menu)
     ourHash = getHashIndex((getLocalIPAddress(), int(port)))
@@ -658,8 +661,9 @@ if len(sys.argv) == 1:
     # Initializing my peer profile
     myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,addr,addr)
 
-    tf = False
-    makeFingerTable(randKeyRange, 0 , 0, tf)
+    #tf = False
+    #makeFingerTable(randKeyRange, 0 , 0, tf)
+    #fingerTable[getHashIndex((successorIP, int(successorPort))] = successorIP + ":" + int(successorPort)
 
     print("My finger table is",myProfile.fingerTable)
 
@@ -766,8 +770,8 @@ elif len(sys.argv) == 3:
         # Initializing my peer profile
         myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,peerSuccessor,peerSuccessor)
 
-        tf = True
-        makeFingerTable(randKeyRange, peerSuccessor[0], peerSuccessor[1], tf)
+        #tf = True
+        #makeFingerTable(randKeyRange, peerSuccessor[0], peerSuccessor[1], tf)
 
         print("My finger table is",myProfile.fingerTable)
 
