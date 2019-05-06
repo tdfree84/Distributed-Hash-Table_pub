@@ -44,9 +44,16 @@ def trueOwner(number):
 
 def owns(number):
     ''' Find the closest person to the hash number requested. '''
+    myHash = getHashIndex(myProfile.myAddres)
+    
+    s = myProfile.successor.split(':')
+    succHash = getHashIndex(s[0], int(s[1]))
 
     hashes = list(myProfile.fingerTable.keys())
     hashes.sort(reverse=True)
+    if number < myHash and number >= succHash:
+        hashes.remove(myHash)   
+
     for i in range(len(hashes)):
         if number >= hashes[i]:
             #Establish connection to person we find
@@ -107,7 +114,7 @@ def insertFile(peerConn):
     insIP = ins[0]
     insPort = ins[1]
     insConn = socket(AF_INET, SOCK_STREAM)
-    insConn.connect( (insIP, insPort) )
+    insConn.connect( (insIP, int(insPort)) )
 
     insConn.send("INS".encode()) # Tell them we want to insert
 
@@ -150,10 +157,10 @@ def getFile(peerConn):
     whoisit = trueOwner(hashed_key)
     print("This person owns it:",whoisit)
     get = whoisit.split(":")
-    getIP = ins[0]
-    getPort = ins[1]
+    getIP = get[0]
+    getPort = get[1]
     getConn = socket(AF_INET, SOCK_STREAM)
-    getConn.connect( (getIP, getPort) )
+    getConn.connect( (getIP, int(getPort)) )
 
     getConn.send("GET".encode())
     sendKey(getConn, hashed_key)
@@ -192,10 +199,10 @@ def getExists(peerConn):
     whoisit = trueOwner(hashed_key)
     print("This person owns it:",whoisit)
     exi = whoisit.split(":")
-    exiIP = ins[0]
-    exiPort = ins[1]
+    exiIP = exi[0]
+    exiPort = exi[1]
     exiConn = socket(AF_INET, SOCK_STREAM)
-    exiConn.connect( (exiIP, exiPort) )
+    exiConn.connect( (exiIP, int(exiPort)) )
 
     exiConn.send("EXI".encode())
     sendKey(peerConn, hashed_key)
@@ -229,10 +236,10 @@ def removeKey(peerConn):
     whoisit = trueOwner(hashed_key)
     print("This person owns it:",whoisit)
     rem = whoisit.split(":")
-    remIP = ins[0]
-    remPort = ins[1]
+    remIP = rem[0]
+    remPort = rem[1]
     remConn = socket(AF_INET, SOCK_STREAM)
-    remConn.connect( (remIP, remPort) )
+    remConn.connect( (remIP, int(remPort)) )
     
     remConn.send("REM".encode())
     sendKey(remConn, hashed_key)
@@ -329,7 +336,7 @@ def makeFingerTable(randKeyRange, peerIP, peerPort, flag):
     offset = randKeyRange
 
     for i in range(5):
-        who = owns(offset)
+        who = trueOwner(offset)
         print("Owns: ",who)
         who_spl = who.split(':')
         who_tup = (who_spl[0],int(who_spl[1]))
@@ -555,7 +562,7 @@ def handlePeer(peerInfo):
             key = recvKey(peerConn)
             print("Key to Get: " + str(key))
 
-            if owns(key) == myProfile.myAddrString():
+            if trueOwner(key) == myProfile.myAddrString():
                 print("in get")
                 try:
                     f = open("repo/"+str(key), "rb")
