@@ -205,6 +205,10 @@ def doDisconnect(peerConn):
     s = myProfile.successor.split(':')
     sendAddress(peerConn, (s[0], int(s[1])))
 
+    successorIP = myProfile.successor.split(':')[0]
+    successorPort = int(myProfile.successor.split(':')[1])
+
+
     #send the number of items from their hash
     #get file names from repo
     fNameList = os.listdir('repo')
