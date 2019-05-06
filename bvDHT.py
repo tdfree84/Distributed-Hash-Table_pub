@@ -44,9 +44,16 @@ def trueOwner(number):
 
 def owns(number):
     ''' Find the closest person to the hash number requested. '''
+    myHash = getHashIndex(myProfile.myAddres)
+    
+    s = myProfile.successor.split(':')
+    succHash = getHashIndex(s[0], int(s[1]))
 
     hashes = list(myProfile.fingerTable.keys())
     hashes.sort(reverse=True)
+    if number < myHash and number >= succHash:
+        hashes.remove(myHash)   
+
     for i in range(len(hashes)):
         if number >= hashes[i]:
             #Establish connection to person we find
