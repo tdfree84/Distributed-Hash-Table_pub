@@ -248,10 +248,10 @@ def doDisconnect(peerConn):
 # Helper function(s) #
 ######################
 
-def makeFingerTable(randKeyRange, peerIP, peerPort, conFlag):
+def makeFingerTable(randKeyRange, peerIP, peerPort, flag):
     fingerTable = {}
     fingerTable[getHashIndex(myProfile.myAddress)] = myProfile.myAddrString()
-    if conFlag == True:
+    if flag == True:
         fingerTable[getHashIndex((peerIP,peerPort))] = str(peerIP + ":" +str(peerPort))
     offset = randKeyRange
 
@@ -383,8 +383,8 @@ def handlePeer(peerInfo):
                 #update our info
                 myProfile.successor = successorIP + ":" + str(successorPort)
                 #put fingertable function in right here to update table
-                tf = False
-                makeFingerTable(randKeyRange, 0, 0, tf)
+                tf = True
+                makeFingerTable(randKeyRange, successorIP, successorPort, tf)
                 print("My finger table is",myProfile.fingerTable)
 
                 break
@@ -418,8 +418,9 @@ def handlePeer(peerInfo):
 
             #MADE CHANGES TO INSERT, FIXED SUCCESSOR PROBLEM
             if successorHash < myHash:
-                if fileName >= 0 and fileName< successorHash or fileName >= myHash and fileName< 2**160:
+                if fileName >= 0 and fileName < successorHash or fileName >= myHash and fileName< 2**160:
                     peerConn.send("T".encode())
+
             elif fileName >= myHash and fileName < successorHash:
             #if o == myProfile.myAddrString():
                 peerConn.send("T".encode())
@@ -652,8 +653,8 @@ elif len(sys.argv) == 3:
         # Initializing my peer profile
         myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,peerSuccessor,peerSuccessor)
 
-        tf = False
-        makeFingerTable(randKeyRange, 0, 0, tf)
+        tf = True
+        makeFingerTable(randKeyRange, peerSuccessor[0], peerSuccessor[1], tf)
 
         print("My finger table is",myProfile.fingerTable)
 
