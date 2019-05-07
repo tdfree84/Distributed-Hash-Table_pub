@@ -46,8 +46,19 @@ def owns(number):
     ''' Find the closest person to the hash number requested. '''
     myHash = getHashIndex(myProfile.myAddress)
     
-    s = myProfile.successor.split(':')
+    print("IT IS A:",myProfile.successor)
+    s = myProfile.successor
+    print("S: " + str(s))
+    s = s.split(":")
     succHash = getHashIndex((s[0], int(s[1])))
+
+    print("IAM: ")
+    print("SUCC is:")
+    print("Looking for:")
+    print(myHash)
+    print(succHash)
+    print(number)
+    print()
 
     hashes = list(myProfile.fingerTable.keys())
     hashes.sort(reverse=True)
@@ -79,12 +90,18 @@ def owns(number):
             t = t.decode()
             if t == "T":
                 conn.close()
+                print("returned hash:")
+                print(hashes[i])
+                print()
                 return myProfile.fingerTable[hashes[i]]
 
             conn.close()
 
-    print('returning largest value in fingertable:')
     print(str(myProfile.fingerTable[hashes[0]]))
+    print('returning largest value in fingertable')
+    print("returned hash:")
+    print(hashes[0])
+    print()
     return myProfile.fingerTable[hashes[0]]
 
 def request_owns():
@@ -267,8 +284,18 @@ def removeKey():
 
 def doDisconnect():
     ''' Disconncet from the DHT.  '''
-    
+
     k = getHashIndex(myProfile.myAddress)-1
+
+    whoisit = trueOwner(k)
+    print("This person owns it:",whoisit)
+    dis = whoisit.split(":")
+    disIP = dis[0]
+    disPort = dis[1]
+    disConn = socket(AF_INET, SOCK_STREAM)
+    disConn.connect( (disIP, int(disPort)) )
+    k = getHashIndex(myProfile.myAddress)-1
+
     whoisit = trueOwner(k)
     print("This person owns it:",whoisit)
     dis = whoisit.split(":")
@@ -466,7 +493,7 @@ def handlePeer(peerInfo):
             
             peerAddr = recvAddress(peerConn)
             peerAddrStr = peerAddr[0] + ":" + str(peerAddr[1])
-            print(myProfile.myAddrString())
+            #print(myProfile.myAddrString())
             if trueOwner(getHashIndex((peerAddr[0], peerAddr[1]))-1) == myProfile.myAddrString():
                 #####################
                 #DISCONNECT PROTOCOL#
@@ -490,6 +517,7 @@ def handlePeer(peerInfo):
                         data = recvVal(peerConn)
                         print("File data: " + data)
                         f = open('repo/' + k, 'wb')
+                        print("open file data")
                         f.write(data)
                         f.close()
                     except:
@@ -735,7 +763,8 @@ elif len(sys.argv) == 3:
 
     myAddress = (getLocalIPAddress(), port)
     fingerTable[getHashIndex((peerIP, peerPort))] = peerIP + ":" + str(peerPort)
-    myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,myAddress,myAddress)
+    myAddressString = myAddress[0] + ":" + str(myAddress[1])
+    myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,myAddressString,myAddressString)
 
     myHash = getHashIndex(myAddress)
     peer = trueOwner(myHash)
@@ -770,8 +799,9 @@ elif len(sys.argv) == 3:
         
         # Finish out rest of connection protocol after we have the ok to continue #
         peerSuccessor = recvAddress(peerConn)
+        print("My received connection protocol cucessor is:",peerSuccessor)
         fingerTable[getHashIndex(peerSuccessor)] = peerSuccessor[0]+":"+str(peerSuccessor[1])
-        peerSuccessor = peerSuccessor[0]+":"+str(peerSuccessor[1])
+        peerSuccessor = peerSuccessor[0] +":"+ str(peerSuccessor[1])
 
         numItems = recvInt(peerConn)
         if numItems == 0:
@@ -791,6 +821,7 @@ elif len(sys.argv) == 3:
 
         # Initializing my peer profile
         myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,peerSuccessor,peerSuccessor)
+        print("MY PEER SUCCESSOR: " + myProfile.successor)
 
         #tf = True
         #makeFingerTable(randKeyRange, peerSuccessor[0], peerSuccessor[1], tf)
@@ -827,6 +858,9 @@ elif len(sys.argv) == 3:
             elif userInput == "6":
                 ##DISCONNET##
                 doDisconnect()
+
+            elif userInput == "7":
+                print(myProfile.fingerTable) 
 
             else:
                 ##BOGUS##
