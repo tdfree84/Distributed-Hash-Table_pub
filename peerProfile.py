@@ -19,6 +19,7 @@ class PeerProfile:
         self.successor = _successor
         self.predecessor = _predecessor
         self.myAddress = _myAddr
+        self.locked = False
 
     def myAddrString(self):
         return self.myAddress[0]+":"+str(self.myAddress[1])

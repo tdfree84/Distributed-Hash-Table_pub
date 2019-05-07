@@ -44,10 +44,11 @@ def trueOwner(number):
 
 def owns(number):
     ''' Find the closest person to the hash number requested. '''
-    myHash = getHashIndex(myProfile.myAddres)
+    myHash = getHashIndex(myProfile.myAddress)
     
-    s = myProfile.successor.split(':')
-    succHash = getHashIndex(s[0], int(s[1]))
+    print("IT IS A:",myProfile.successor)
+    s = myProfile.successor
+    succHash = getHashIndex((s[0], int(s[1])))
 
     hashes = list(myProfile.fingerTable.keys())
     hashes.sort(reverse=True)
@@ -332,7 +333,7 @@ def makeFingerTable(randKeyRange, peerIP, peerPort, flag):
     #fingerTable = {}
     #fingerTable[getHashIndex(myProfile.myAddress)] = myProfile.myAddrString()
     #if flag == True:
-        fingerTable[getHashIndex((peerIP, int(peerPort)))] = str(peerIP + ":" +str(peerPort))
+    fingerTable[getHashIndex((peerIP, int(peerPort)))] = peerIP + ":" +str(peerPort)
 
     offset = randKeyRange
 
@@ -403,7 +404,7 @@ def handlePeer(peerInfo):
             #peerConn.send('T'.encode())
             #update our fingertable
             #WE NEED TO PASS UP OUR PEER INFO
-            fingerTable[getHashIndex((peerIP, int(peerPort))] = peerIP + ":" + str(peerPort)
+            fingerTable[getHashIndex((peerIP, int(peerPort)))] = peerIP + ":" + str(peerPort)
             #tf = True
             #makeFingerTable(randKeyRange, peerIP, peerPort, tf)
             #print("My finger table is", myProfile.fingerTable)
@@ -454,10 +455,8 @@ def handlePeer(peerInfo):
             
             peerAddr = recvAddress(peerConn)
             peerAddrStr = peerAddr[0] + ":" + str(peerAddr[1])
-            o = owns(getHashIndex( (peerAddr[0], peerAddr[1]-1)))
-            print(o)
             print(myProfile.myAddrString())
-            if trueOwner(getHashIndex((peerAddr[0], peerAddr[1]-1))) == myProfile.myAddrString():
+            if trueOwner(getHashIndex((peerAddr[0], peerAddr[1]))-1) == myProfile.myAddrString():
                 #####################
                 #DISCONNECT PROTOCOL#
                 #####################
@@ -490,7 +489,7 @@ def handlePeer(peerInfo):
                 #update our info
                 myProfile.successor = successorIP + ":" + str(successorPort)
                 #put fingertable function in right here to update table
-                fingerTable[getHashIndex((successorIP, int(successorPort))] = successorIP + ":" + int(successorPort)
+                fingerTable[getHashIndex((successorIP, int(successorPort)))] = successorIP + ":" + str(successorPort)
                 #tf = True
                 #makeFingerTable(randKeyRange, successorIP, successorPort, tf)
                 print("My finger table is",myProfile.fingerTable)
