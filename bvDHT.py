@@ -45,7 +45,7 @@ def trueOwner(number):
 def owns(number):
     ''' Find the closest person to the hash number requested. '''
     myHash = getHashIndex(myProfile.myAddress)
-
+    
     s = myProfile.successor
     s = s.split(":")
     succHash = getHashIndex((s[0], int(s[1])))
@@ -70,6 +70,16 @@ def owns(number):
             try:
                 conn.connect((connIP, connPort))
                 conn.send("PUL".encode())
+                t = recvAll(conn, 1)
+                t = t.decode()
+                if t == "T":
+                    conn.close()
+                    print("returned hash:")
+                    print(hashes[i])
+                    print()
+                    return myProfile.fingerTable[hashes[i]]
+                else:
+                    conn.close()
             except:
                 conn.close()
                 
@@ -322,7 +332,9 @@ def doDisconnect():
 
     #get our successor to send to predecessor
     s = myProfile.successor.split(':')
-    sendAddress(disConn, (s[0], int(s[1])))
+    sendAddress(disConn, (s[0], int(s[1]))) # Send S1
+    st = myProfile.successorTwo.split(':')
+    sendAddress(disConn, (st[0], int(st[1]))) # Send S2
 
     successorIP = myProfile.successor.split(':')[0]
     successorPort = int(myProfile.successor.split(':')[1])
@@ -382,6 +394,8 @@ def handlePeer(peerInfo):
             pass
 
         conMsg = recvAll(peerConn, 3)
+        if conMsg!='' and conMsg!='\n' and conMsg != ' ' and conMsg != b'':
+            print("precursor conmsg is:",conMsg)
         conMsg = conMsg.decode()
         if conMsg!='' and conMsg!='\n' and conMsg != ' ':
             print(conMsg)
@@ -615,6 +629,7 @@ def handlePeer(peerInfo):
                 try:
                     f=open("repo/"+str(key), "rb")
                     peerConn.send("T".encode())
+                    f.close()
                 except:
                     peerConn.send("F".encode())
             else:
@@ -795,11 +810,18 @@ elif len(sys.argv) == 3:
         fingerTable[getHashIndex((getLocalIPAddress(), int(port)))] = myAddressString
 
         # Finish out rest of connection protocol after we have the ok to continue #
-        peerSuccessor = recvAddress(peerConn)
-        print("My received connection protocol cucessor is:",peerSuccessor)
+        peerSuccessor1 = recvAddress(peerConn)
+        print("My received connection protocol cucessor is:",peerSuccessor1)
         # Add who we connected to to our finger table
-        fingerTable[getHashIndex(peerSuccessor)] = peerSuccessor[0]+":"+str(peerSuccessor[1])
-        peerSuccessor = peerSuccessor[0] +":"+ str(peerSuccessor[1])
+        fingerTable[getHashIndex(peerSuccessor1)] = peerSuccessor1[0]+":"+str(peerSuccessor1[1])
+        peerSuccessor1 = peerSuccessor1[0] +":"+ str(peerSuccessor1[1])
+
+        peerSuccessor2 = recvAddress(peerConn)
+        print("My received connection protocol cucessor is:",peerSuccessor2)
+        # Add who we connected to to our finger table
+        fingerTable[getHashIndex(peerSuccessor2)] = peerSuccessor2[0]+":"+str(peerSuccessor2[1])
+        peerSuccessor2 = peerSuccessor2[0] +":"+ str(peerSuccessor2[1])
+
 
         numItems = recvInt(peerConn)
         if numItems == 0:
@@ -818,7 +840,7 @@ elif len(sys.argv) == 3:
         # End connection protocol #
 
         # Initializing my peer profile
-        myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,peerSuccessor,myAddressString)
+        myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,peerSuccessor1,peerSuccessor2)
         print("MY PEER SUCCESSOR: " + myProfile.successor)
 
         print("My finger table is",myProfile.fingerTable)
