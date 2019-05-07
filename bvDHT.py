@@ -82,6 +82,22 @@ def owns(number):
                     conn.close()
             except:
                 conn.close()
+                
+                if myProfile.fingerTable[hashes[i]] == myProfile.successor:
+                    #initiate protocol to get new second successor 
+                    myProfile.successor = myProfile.successorTwo
+                    conn = socket(AF_INET, SOCK_STREAM)
+                    connIPort = myProfile.successor.split(":")
+                    connIP = connIPort[0]
+                    connPort = int(connIPort[1])
+
+                    #send ABD protocol to second successor
+                    conn.connect((connIP, connPort))
+                    conn.send("ABD".encode())
+                    secondSuc = recvAddress(conn)
+                    myProfile.successorTwo = secondSuc[0] + ":" + str(secondSuc[1])
+                    conn.close()
+
                 del myProfile.fingerTable[hashes[i]]
                 return owns(number)
 
@@ -404,14 +420,21 @@ def handlePeer(peerInfo):
             #get our successor in order to send to person connecting
             successor = myProfile.successor.split(":")
             successorIP = successor[0]
-            successorPort = successor[1]
-            successorHash = getHashIndex((successorIP, int(successorPort)))
+            successorPort = int(successor[1])
+            successorHash = getHashIndex((successorIP, successorPort))
+            
+            #get successor 2
+            successorTwo = myProfile.successorTwo.split(":")
+            successorTwoIP = successorTwo[0]
+            successorTwoPort = int(successorTwo[1])
+            successorTwoHash = getHashIndex((successorTwoIP, successorTwoPort))
 
             #if we own the peer's hash, continue with protocol, else, send N and skip
             if trueOwner(peerHash) == myProfile.myAddrString():
                 peerConn.send("T".encode())
             else:
                 peerConn.send("N".encode())
+                myProfile.locked = False
                 continue
 
             #update our fingertable by adding peer who just connected to us
@@ -419,7 +442,10 @@ def handlePeer(peerInfo):
             print("My finger table is", myProfile.fingerTable)
 
             #send the address of our successor
-            sendAddress(peerConn, (successorIP, int(successorPort)))
+            sendAddress(peerConn, (successorIP, successorPort))
+
+            #send address of second successor
+            sendAddress(peerConn, (successorTwoIP, successTwoPort))
 
             #get file names from repo
             fNameList = os.listdir('repo')
@@ -473,6 +499,12 @@ def handlePeer(peerInfo):
                 successorIP = successor[0]
                 successorPort = successor[1]
 
+                #receive successor 2
+                successorTwo = recvAddress(peerConn)
+                successorTwoIP = successorTwo[0]
+                successorTwoPort = successorTwo[1]
+                successorTwoHash = getHashIndex((successorTwoIP, successorTwoPort))
+
                 #receive amount of files they want to send
                 numItems = recvInt(peerConn)
 
@@ -494,7 +526,11 @@ def handlePeer(peerInfo):
 
                 #update our info
                 myProfile.successor = successorIP + ":" + str(successorPort)
+                myProfile.successorTwo = successorTwoIP + ":" + str(successorTwoPort)
+
                 fingerTable[getHashIndex((successorIP, int(successorPort)))] = successorIP + ":" + str(successorPort)
+
+                fingerTable[getHashIndex((successorTwoIP, int(successorTwoPort)))] = successorTwoIP + ":" + str(successorTwoPort)
                 print("My finger table is",myProfile.fingerTable)
 
                 myProfile.locked = False
@@ -504,6 +540,7 @@ def handlePeer(peerInfo):
             else:
                 #send this if we don't own the space they want
                 peerConn.send("N".encode())
+                myProfile.locked = False
 
 
 
@@ -630,6 +667,12 @@ def handlePeer(peerInfo):
             #uses function in our class to put diagnostic information into a string and send to whoever requested
             fingerString = myProfile.serialize()
             sendVal(peerConn, fingerString)
+
+        elif conMsg == "ABD":
+            successor = myProfile.successor
+            successorIP = successor[0]
+            successorPort = int(successor[1])
+            sendAddress(peerConn, (successorIP, successorPort))
 
     return
 
