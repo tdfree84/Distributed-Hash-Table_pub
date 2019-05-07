@@ -316,7 +316,9 @@ def doDisconnect():
 
     #get our successor to send to predecessor
     s = myProfile.successor.split(':')
-    sendAddress(disConn, (s[0], int(s[1])))
+    sendAddress(disConn, (s[0], int(s[1]))) # Send S1
+    st = myProfile.successorTwo.split(':')
+    sendAddress(disConn, (st[0], int(st[1]))) # Send S2
 
     successorIP = myProfile.successor.split(':')[0]
     successorPort = int(myProfile.successor.split(':')[1])
