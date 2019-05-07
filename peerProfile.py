@@ -14,10 +14,10 @@ class PeerProfile:
 
     '''
 
-    def __init__(self, _myAddr,_fingerTable, _successor, _predecessor):
+    def __init__(self, _myAddr,_fingerTable, _successor, _successorTwo):
         self.fingerTable = _fingerTable
         self.successor = _successor
-        self.predecessor = _predecessor
+        self.successorTwo = _successorTwo
         self.myAddress = _myAddr
         self.locked = False
 
