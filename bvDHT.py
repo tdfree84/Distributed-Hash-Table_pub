@@ -795,7 +795,7 @@ elif len(sys.argv) == 3:
         # End connection protocol #
 
         # Initializing my peer profile
-        myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,peerSuccessor,myAddressString)
+        myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,peerSuccessor1,peerSuccessor2)
         print("MY PEER SUCCESSOR: " + myProfile.successor)
 
         print("My finger table is",myProfile.fingerTable)
