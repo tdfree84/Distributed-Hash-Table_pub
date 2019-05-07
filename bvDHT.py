@@ -765,11 +765,18 @@ elif len(sys.argv) == 3:
         fingerTable[getHashIndex((getLocalIPAddress(), int(port)))] = myAddressString
 
         # Finish out rest of connection protocol after we have the ok to continue #
-        peerSuccessor = recvAddress(peerConn)
-        print("My received connection protocol cucessor is:",peerSuccessor)
+        peerSuccessor1 = recvAddress(peerConn)
+        print("My received connection protocol cucessor is:",peerSuccessor1)
         # Add who we connected to to our finger table
-        fingerTable[getHashIndex(peerSuccessor)] = peerSuccessor[0]+":"+str(peerSuccessor[1])
-        peerSuccessor = peerSuccessor[0] +":"+ str(peerSuccessor[1])
+        fingerTable[getHashIndex(peerSuccessor1)] = peerSuccessor1[0]+":"+str(peerSuccessor1[1])
+        peerSuccessor1 = peerSuccessor1[0] +":"+ str(peerSuccessor1[1])
+
+        peerSuccessor2 = recvAddress(peerConn)
+        print("My received connection protocol cucessor is:",peerSuccessor2)
+        # Add who we connected to to our finger table
+        fingerTable[getHashIndex(peerSuccessor2)] = peerSuccessor2[0]+":"+str(peerSuccessor2[1])
+        peerSuccessor2 = peerSuccessor2[0] +":"+ str(peerSuccessor2[1])
+
 
         numItems = recvInt(peerConn)
         if numItems == 0:
