@@ -46,19 +46,18 @@ def owns(number):
     ''' Find the closest person to the hash number requested. '''
     myHash = getHashIndex(myProfile.myAddress)
     
-    print("IT IS A:",myProfile.successor)
     s = myProfile.successor
     print("S: " + str(s))
     s = s.split(":")
     succHash = getHashIndex((s[0], int(s[1])))
 
-    print("IAM: ")
-    print("SUCC is:")
-    print("Looking for:")
-    print(myHash)
-    print(succHash)
-    print(number)
-    print()
+   #print("IAM: ")
+   #print("SUCC is:")
+   #print("Looking for:")
+   #print(myHash)
+   #print(succHash)
+   #print(number)
+   #print()
 
     hashes = list(myProfile.fingerTable.keys())
     hashes.sort(reverse=True)
@@ -81,21 +80,21 @@ def owns(number):
             try:
                 conn.connect((connIP, connPort))
                 conn.send("PUL".encode())
+                t = recvAll(conn, 1)
+                t = t.decode()
+                if t == "T":
+                    conn.close()
+                    print("returned hash:")
+                    print(hashes[i])
+                    print()
+                    return myProfile.fingerTable[hashes[i]]
+                else:
+                    conn.close()
             except:
                 conn.close()
                 del myProfile.fingerTable[hashes[i]]
                 return owns(number)
 
-            t = recvAll(conn, 1)
-            t = t.decode()
-            if t == "T":
-                conn.close()
-                print("returned hash:")
-                print(hashes[i])
-                print()
-                return myProfile.fingerTable[hashes[i]]
-
-            conn.close()
 
     print(str(myProfile.fingerTable[hashes[0]]))
     print('returning largest value in fingertable')
@@ -294,15 +293,6 @@ def doDisconnect():
     disPort = dis[1]
     disConn = socket(AF_INET, SOCK_STREAM)
     disConn.connect( (disIP, int(disPort)) )
-    k = getHashIndex(myProfile.myAddress)-1
-
-    whoisit = trueOwner(k)
-    print("This person owns it:",whoisit)
-    dis = whoisit.split(":")
-    disIP = rem[0]
-    disPort = rem[1]
-    disConn = socket(AF_INET, SOCK_STREAM)
-    disConn.connect( (remIP, int(remPort)) )
 
     disConn.send("DIS".encode())
     sendAddress(disConn, myProfile.myAddress)
@@ -383,7 +373,7 @@ def makeFingerTable(randKeyRange, peerIP, peerPort, flag):
         fingerTable[offset] = who
         offset += randKeyRange
 
-    myProfile.fingerTable = fingerTable
+    #myProfile.fingerTable = fingerTable
 
 
 
@@ -400,6 +390,8 @@ def handlePeer(peerInfo):
     peerConn, peerAddr = peerInfo
     while True:
         conMsg = recvAll(peerConn, 3)
+        if conMsg!='' and conMsg!='\n' and conMsg != ' ':
+            print("precursor conmsg is:",conMsg)
         conMsg = conMsg.decode()
         if conMsg!='' and conMsg!='\n' and conMsg != ' ':
             print(conMsg)
@@ -625,6 +617,7 @@ def handlePeer(peerInfo):
                 try:
                     f=open("repo/"+str(key), "rb")
                     peerConn.send("T".encode())
+                    f.close()
                 except:
                     peerConn.send("F".encode())
             else:
