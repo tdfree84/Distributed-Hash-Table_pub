@@ -10,7 +10,7 @@ class PeerProfile:
         fingerTable: { key = getHashIndex((getLocalIPAddress(), int(port))) : value = str(getLocalIPAddress():port), ... }
 
         successor: str( getLocalIPAddress() + ":" + port )
-        predecessor: str( getLocalIPAddress() + ":" + port )
+        successorTwo: str( getLocalIPAddress() + ":" + port )
 
     '''
 
