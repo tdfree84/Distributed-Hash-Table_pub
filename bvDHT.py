@@ -390,7 +390,7 @@ def handlePeer(peerInfo):
     peerConn, peerAddr = peerInfo
     while True:
         conMsg = recvAll(peerConn, 3)
-        if conMsg!='' and conMsg!='\n' and conMsg != ' ':
+        if conMsg!='' and conMsg!='\n' and conMsg != ' ' and conMsg != b'':
             print("precursor conmsg is:",conMsg)
         conMsg = conMsg.decode()
         if conMsg!='' and conMsg!='\n' and conMsg != ' ':
