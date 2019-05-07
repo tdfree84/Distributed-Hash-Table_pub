@@ -372,6 +372,9 @@ def handlePeer(peerInfo):
     peerConn, peerAddr = peerInfo
     while True:
         #begin waiting for protocol messages
+        while myProfile.locked:
+            pass
+
         conMsg = recvAll(peerConn, 3)
         if conMsg!='' and conMsg!='\n' and conMsg != ' ' and conMsg != b'':
             print("precursor conmsg is:",conMsg)
