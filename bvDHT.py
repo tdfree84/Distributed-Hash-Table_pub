@@ -70,16 +70,7 @@ def owns(number):
             try:
                 conn.connect((connIP, connPort))
                 conn.send("PUL".encode())
-                t = recvAll(conn, 1)
-                t = t.decode()
-                if t == "T":
-                    conn.close()
-                    print("returned hash:")
-                    print(hashes[i])
-                    print()
-                    return myProfile.fingerTable[hashes[i]]
-                else:
-                    conn.close()
+
             except:
                 conn.close()
                 
@@ -123,7 +114,6 @@ def request_owns():
     k = input("Enter a key: ")
     hashed_key = int.from_bytes(hashlib.sha1(k.encode()).digest(), byteorder="big")
     print(trueOwner(hashed_key))
-    return trueOwner(hashed-key)
 
 def insertFile():
     ''' Inserts file into the DHT. '''
@@ -390,12 +380,8 @@ def handlePeer(peerInfo):
     peerConn, peerAddr = peerInfo
     while True:
         #begin waiting for protocol messages
-        while myProfile.locked:
-            pass
 
         conMsg = recvAll(peerConn, 3)
-        if conMsg!='' and conMsg!='\n' and conMsg != ' ' and conMsg != b'':
-            print("precursor conmsg is:",conMsg)
         conMsg = conMsg.decode()
         if conMsg!='' and conMsg!='\n' and conMsg != ' ':
             print(conMsg)
@@ -403,6 +389,8 @@ def handlePeer(peerInfo):
             #####################
             #CONNECTION PROTOCOL#
             #####################
+            while myProfile.locked:
+                pass
 
             #set lock to true
             myProfile.locked = True
@@ -429,11 +417,16 @@ def handlePeer(peerInfo):
             successorTwoPort = int(successorTwo[1])
             successorTwoHash = getHashIndex((successorTwoIP, successorTwoPort))
 
+            print(trueOwner(peerHash))
+            print(myProfile.myAddrString())
+
             #if we own the peer's hash, continue with protocol, else, send N and skip
             if trueOwner(peerHash) == myProfile.myAddrString():
                 peerConn.send("T".encode())
+                print("sent T")
             else:
                 peerConn.send("N".encode())
+                print("sent N")
                 myProfile.locked = False
                 continue
 
@@ -445,7 +438,7 @@ def handlePeer(peerInfo):
             sendAddress(peerConn, (successorIP, successorPort))
 
             #send address of second successor
-            sendAddress(peerConn, (successorTwoIP, successTwoPort))
+            sendAddress(peerConn, (successorTwoIP, successorTwoPort))
 
             #get file names from repo
             fNameList = os.listdir('repo')
@@ -474,7 +467,9 @@ def handlePeer(peerInfo):
 
                 #set successor to person who just connected to us
                 #they are now our new successor
+                #update second successor to old original successor
                 print("updating SUECCESOOR")
+                myProfile.successorTwo = myProfile.successor
                 myProfile.successor = peerIP + ":" + str(peerPort)
 
             myProfile.locked = False
@@ -483,6 +478,8 @@ def handlePeer(peerInfo):
             #####################
             #DISCONNECT PROTOCOL#
             #####################
+            while myProfile.locked:
+                pass
 
             #set lock
             myProfile.locked = True
@@ -511,6 +508,7 @@ def handlePeer(peerInfo):
                 #for number of files, receive key and value and write it to file
                 for n in range(numItems):
                     try:
+                        print("writing data to file from disconnector")
                         k = recvKey(peerConn)
                         data = recvVal(peerConn)
                         f = open('repo/' + str(k), 'wb')
@@ -548,6 +546,8 @@ def handlePeer(peerInfo):
             #################
             #INSERT PROTOCOL#
             #################
+            while myProfile.locked:
+                pass
 
             fileName = recvKey(peerConn)
 
@@ -597,6 +597,8 @@ def handlePeer(peerInfo):
 
         elif conMsg == "GET":
             ##GET PROTOCOL##
+            while myProfile.locked:
+                pass
 
             key = recvKey(peerConn)
             print("Key to Get: " + str(key))
@@ -637,6 +639,8 @@ def handlePeer(peerInfo):
 
         elif conMsg == "REM":
             ##REMOVE PROTOCOL##
+            while myProfile.locked:
+                pass
 
             #receive key
             key = recvKey(peerConn)
