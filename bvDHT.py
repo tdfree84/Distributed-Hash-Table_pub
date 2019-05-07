@@ -44,14 +44,15 @@ def trueOwner(number):
 
 def owns(number):
     ''' Find the closest person to the hash number requested. '''
-    myHash = getHashIndex(myProfile.myAddres)
+    myHash = getHashIndex(myProfile.myAddress)
     
     s = myProfile.successor.split(':')
-    succHash = getHashIndex(s[0], int(s[1]))
+    succHash = getHashIndex((s[0], int(s[1])))
 
     hashes = list(myProfile.fingerTable.keys())
     hashes.sort(reverse=True)
     if number < myHash and number >= succHash:
+        print('deleting my own hash')
         hashes.remove(myHash)   
 
     for i in range(len(hashes)):
@@ -79,12 +80,14 @@ def owns(number):
             if t == "T":
                 conn.close()
                 return myProfile.fingerTable[hashes[i]]
+
             conn.close()
 
-    print('returning largest value in fingertable')
+    print('returning largest value in fingertable:')
+    print(str(myProfile.fingerTable[hashes[0]]))
     return myProfile.fingerTable[hashes[0]]
 
-def request_owns(peerConn):
+def request_owns():
     ''' Request an owns query from a peer. '''
 
     k = input("Enter a key: ")
@@ -100,7 +103,7 @@ def request_owns(peerConn):
    #who = recvAddress(peerConn)
     #print("This is who might own it:",who)
 
-def insertFile(peerConn):
+def insertFile():
     ''' Inserts file into the DHT. '''
 
 
@@ -147,7 +150,7 @@ def insertFile(peerConn):
     insConn.close()
     return
     
-def getFile(peerConn):
+def getFile():
     ''' Retrieves data in the DHT. '''
 
     # Collect what the user wants from the hash table
@@ -188,7 +191,7 @@ def getFile(peerConn):
 
     return
 
-def getExists(peerConn):
+def getExists():
     ''' Checks if a file exists in the DHT. '''
 
 
@@ -225,7 +228,7 @@ def getExists(peerConn):
 
     return
 
-def removeKey(peerConn):
+def removeKey():
     ''' Removes an item from the distributed hash table. '''
 
 
@@ -262,14 +265,23 @@ def removeKey(peerConn):
 
     return
 
-def doDisconnect(peerConn):
+def doDisconnect():
     ''' Disconncet from the DHT.  '''
     
-    peerConn.send("DIS".encode())
-    sendAddress(peerConn, myProfile.myAddress)
+    k = getHashIndex(myProfile.myAddress)-1
+    whoisit = trueOwner(k)
+    print("This person owns it:",whoisit)
+    dis = whoisit.split(":")
+    disIP = rem[0]
+    disPort = rem[1]
+    disConn = socket(AF_INET, SOCK_STREAM)
+    disConn.connect( (remIP, int(remPort)) )
+
+    disConn.send("DIS".encode())
+    sendAddress(disConn, myProfile.myAddress)
 
     # Receive peer response #
-    tf = recvAll(peerConn, 1)
+    tf = recvAll(disConn, 1)
     tf = tf.decode()
     print("Receiving from peer",tf)
     if tf == "T":
@@ -283,7 +295,7 @@ def doDisconnect(peerConn):
         return
         
     s = myProfile.successor.split(':')
-    sendAddress(peerConn, (s[0], int(s[1])))
+    sendAddress(disConn, (s[0], int(s[1])))
 
     successorIP = myProfile.successor.split(':')[0]
     successorPort = int(myProfile.successor.split(':')[1])
@@ -295,21 +307,21 @@ def doDisconnect(peerConn):
     listToSend = []
     for n in fNameList:
         nInt = int(n)
-        if nInt < getHashIndex((successorIP, int(successorPort))) and nInt > getHashIndex((peerIP, int(peerPort))):
+        if nInt < getHashIndex((successorIP, int(successorPort))) and nInt > getHashIndex((disIP, int(disPort))):
             listToSend.append(n)
 
-    sendInt(peerConn, len(listToSend))
+    sendInt(disConn, len(listToSend))
 
     #for number of items, send [key][valSize][val] to peer
     for n in listToSend:
         f = open('repo/' + n, 'rb')
         fBytes = f.read()
-        sendKey(peerConn, int(n))
-        sendVal(peerConn, fBytes) 
+        sendKey(disConn, int(n))
+        sendVal(disConn, fBytes) 
         f.close()
 
     # Receive peer response #
-    tf = recvAll(peerConn, 1)
+    tf = recvAll(disConn, 1)
     tf = tf.decode()
     print("Receiving from peer",tf)
     if tf == "T":
@@ -332,7 +344,7 @@ def makeFingerTable(randKeyRange, peerIP, peerPort, flag):
     #fingerTable = {}
     #fingerTable[getHashIndex(myProfile.myAddress)] = myProfile.myAddrString()
     #if flag == True:
-        fingerTable[getHashIndex((peerIP, int(peerPort)))] = str(peerIP + ":" +str(peerPort))
+    fingerTable[getHashIndex((peerIP, int(peerPort)))] = peerIP + ":" + str(peerPort)
 
     offset = randKeyRange
 
@@ -403,10 +415,10 @@ def handlePeer(peerInfo):
             #peerConn.send('T'.encode())
             #update our fingertable
             #WE NEED TO PASS UP OUR PEER INFO
-            fingerTable[getHashIndex((peerIP, int(peerPort))] = peerIP + ":" + str(peerPort)
+            fingerTable[getHashIndex((peerIP, int(peerPort)))] = peerIP + ":" + str(peerPort)
             #tf = True
             #makeFingerTable(randKeyRange, peerIP, peerPort, tf)
-            #print("My finger table is", myProfile.fingerTable)
+            print("My finger table is", myProfile.fingerTable)
 
             #send the address of our successor
             successor = myProfile.successor.split(":")
@@ -454,10 +466,8 @@ def handlePeer(peerInfo):
             
             peerAddr = recvAddress(peerConn)
             peerAddrStr = peerAddr[0] + ":" + str(peerAddr[1])
-            o = owns(getHashIndex( (peerAddr[0], peerAddr[1]-1)))
-            print(o)
             print(myProfile.myAddrString())
-            if trueOwner(getHashIndex((peerAddr[0], peerAddr[1]-1))) == myProfile.myAddrString():
+            if trueOwner(getHashIndex((peerAddr[0], peerAddr[1]))-1) == myProfile.myAddrString():
                 #####################
                 #DISCONNECT PROTOCOL#
                 #####################
@@ -476,13 +486,14 @@ def handlePeer(peerInfo):
                 for n in range(numItems):
                     try:
                         k = recvKey(peerConn)
+                        print("File key: " + k)
                         data = recvVal(peerConn)
+                        print("File data: " + data)
                         f = open('repo/' + k, 'wb')
                         f.write(data)
                         f.close()
                     except:
                         print("Failed to write some data when peer was disconnecting")
-                        break
                 
                 peerConn.send("T".encode())
                 peerConn.close()
@@ -490,7 +501,7 @@ def handlePeer(peerInfo):
                 #update our info
                 myProfile.successor = successorIP + ":" + str(successorPort)
                 #put fingertable function in right here to update table
-                fingerTable[getHashIndex((successorIP, int(successorPort))] = successorIP + ":" + int(successorPort)
+                fingerTable[getHashIndex((successorIP, int(successorPort)))] = successorIP + ":" + str(successorPort)
                 #tf = True
                 #makeFingerTable(randKeyRange, successorIP, successorPort, tf)
                 print("My finger table is",myProfile.fingerTable)
@@ -682,23 +693,27 @@ if len(sys.argv) == 1:
     #DOESNT WORK
         if userInput == "1":
             ##INSERT##
-            insertFile(peerConn)
+            insertFile()
 
         elif userInput == "2":
             ##REMOVE##
-            removeKey(peerConn)
+            removeKey()
 
         elif userInput == "3":
             ##GET##
-            getFile(peerConn)
+            getFile()
 
         elif userInput == "4":
             ##EXISTS##
-            getExists(peerConn)
+            getExists()
 
         elif userInput == "5":
             ##OWNS##
-            request_owns(peerConn)
+            request_owns()
+
+        elif userInput == "6":
+            ##DISCONNET##
+            doDisconnect()
         
         else:
             ##BOGUS##
@@ -791,27 +806,27 @@ elif len(sys.argv) == 3:
 
             if userInput == "1":
                 ##INSERT##
-                insertFile(peerConn)
+                insertFile()
 
             elif userInput == "2":
                 ##REMOVE##
-                removeKey(peerConn)
+                removeKey()
 
             elif userInput == "3":
                 ##GET##
-                getFile(peerConn)
+                getFile()
 
             elif userInput == "4":
                 ##EXISTS##
-                getExists(peerConn)
+                getExists()
 
             elif userInput == "5":
                 ##OWNS##
-                request_owns(peerConn)
+                request_owns()
 
             elif userInput == "6":
                 ##DISCONNET##
-                doDisconnect(peerConn)
+                doDisconnect()
 
             else:
                 ##BOGUS##
