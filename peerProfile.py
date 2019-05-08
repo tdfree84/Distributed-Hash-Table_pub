@@ -4,9 +4,6 @@ class PeerProfile:
         
         myAddress: tuple( getLocalIPAddress(), int(port) )
 
-        minHash: int( getHashIndex((getLocalIPAddress(), int(port))) )
-        maxHash: int( getHashIndex((getLocalIPAddress(), int(port))) - 1 )
-
         fingerTable: { key = getHashIndex((getLocalIPAddress(), int(port))) : value = str(getLocalIPAddress():port), ... }
 
         successor: str( getLocalIPAddress() + ":" + port )
