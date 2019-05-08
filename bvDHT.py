@@ -831,17 +831,17 @@ elif len(sys.argv) == 3:
         peerSuccessor1 = recvAddress(peerConn)
         # Add who we connected to to our finger table
         fingerTable[getHashIndex(peerSuccessor1)] = peerSuccessor1[0]+":"+str(peerSuccessor1[1])
-        peerSuccessor1 = peerSuccessor1[0] +":"+ str(peerSuccessor1[1])
 
         peerSuccessor2 = recvAddress(peerConn)
         # Add who we connected to to our finger table
         fingerTable[getHashIndex(peerSuccessor2)] = peerSuccessor2[0]+":"+str(peerSuccessor2[1])
-        peerSuccessor2 = peerSuccessor2[0] +":"+ str(peerSuccessor2[1])
 
         if peerSuccessor1 == peerSuccessor2:
             fingerTable[getHashIndex(peerSuccessor2)] = myAddressString
             peerSuccessor2 = myAddressString
 
+        peerSuccessor1 = peerSuccessor1[0] +":"+ str(peerSuccessor1[1])
+        peerSuccessor2 = peerSuccessor2[0] +":"+ str(peerSuccessor2[1])
 
 
         numItems = recvInt(peerConn)
