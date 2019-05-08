@@ -102,7 +102,13 @@ def owns(number):
                     connPort = int(connIPort[1])
 
                     #send ABD protocol to second successor
-                    conn.connect((connIP, connPort))
+                    try: 
+                        conn.connect((connIP, connPort))
+                    except:
+                        print("Connection failed...")
+                        del myProfile.fingerTable[hashes[i]]
+                        return owns(number)
+
                     conn.send("ABD".encode())
                     secondSuc = recvAddress(conn)
                     myProfile.successorTwo = secondSuc[0] + ":" + str(secondSuc[1])
