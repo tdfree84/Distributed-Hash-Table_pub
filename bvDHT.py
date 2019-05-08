@@ -728,44 +728,52 @@ if len(sys.argv) == 1:
 
     print(menu)
     #waiting for commands
-    userInput = input("Command?\n")
-    while userInput != "disconnect":
-        print("Running")
-
-        if userInput == "1":
-            ##INSERT##
-            insertFile()
-
-        elif userInput == "2":
-            ##REMOVE##
-            removeKey()
-
-        elif userInput == "3":
-            ##GET##
-            getFile()
-
-        elif userInput == "4":
-            ##EXISTS##
-            getExists()
-
-        elif userInput == "5":
-            ##OWNS##
-            request_owns()
-
-        elif userInput == "6":
-            ##DISCONNET##
-            doDisconnect()
-
-        elif userInput == "7":
-            ##DIAGNOSTICS##
-            print(myProfile.serialize()) 
-
-        else:
-            ##BOGUS##
-            print("What?")
-
-        print(menu)
+    try:
         userInput = input("Command?\n")
+    except KeyboardInterrupt:
+        print("Rogue client...")
+        doDisconnect()
+
+    try:
+        while True:
+            if userInput == "1":
+                ##INSERT##
+                insertFile()
+
+            elif userInput == "2":
+                ##REMOVE##
+                removeKey()
+
+            elif userInput == "3":
+                ##GET##
+                getFile()
+
+            elif userInput == "4":
+                ##EXISTS##
+                getExists()
+
+            elif userInput == "5":
+                ##OWNS##
+                request_owns()
+
+            elif userInput == "6":
+                ##DISCONNET##
+                doDisconnect()
+
+            elif userInput == "7":
+                ##DIAGNOSTICS##
+                print(myProfile.serialize()) 
+
+            else:
+                ##BOGUS##
+                print("What?")
+
+            print(menu)
+            userInput = input("Command?\n")
+
+    except KeyboardInterrupt:
+        print("Rogue client...")
+        doDisconnect()
 
 # Connecting client passes arguments of ip and port
 elif len(sys.argv) == 3:
@@ -823,13 +831,17 @@ elif len(sys.argv) == 3:
         peerSuccessor1 = recvAddress(peerConn)
         # Add who we connected to to our finger table
         fingerTable[getHashIndex(peerSuccessor1)] = peerSuccessor1[0]+":"+str(peerSuccessor1[1])
-        peerSuccessor1 = peerSuccessor1[0] +":"+ str(peerSuccessor1[1])
 
         peerSuccessor2 = recvAddress(peerConn)
         # Add who we connected to to our finger table
         fingerTable[getHashIndex(peerSuccessor2)] = peerSuccessor2[0]+":"+str(peerSuccessor2[1])
-        peerSuccessor2 = peerSuccessor2[0] +":"+ str(peerSuccessor2[1])
 
+        if peerSuccessor1 == peerSuccessor2:
+            fingerTable[getHashIndex(peerSuccessor2)] = myAddressString
+            peerSuccessor2 = myAddressString
+
+        peerSuccessor1 = peerSuccessor1[0] +":"+ str(peerSuccessor1[1])
+        peerSuccessor2 = peerSuccessor2[0] +":"+ str(peerSuccessor2[1])
 
         numItems = recvInt(peerConn)
         if numItems == 0:
@@ -852,43 +864,52 @@ elif len(sys.argv) == 3:
 
         #recv all protocol messages from peer we connected to
         print(menu)
-        userInput = input("Command?\n")
-        while userInput != "disconnect":
-
-            if userInput == "1":
-                ##INSERT##
-                insertFile()
-
-            elif userInput == "2":
-                ##REMOVE##
-                removeKey()
-
-            elif userInput == "3":
-                ##GET##
-                getFile()
-
-            elif userInput == "4":
-                ##EXISTS##
-                getExists()
-
-            elif userInput == "5":
-                ##OWNS##
-                request_owns()
-
-            elif userInput == "6":
-                ##DISCONNET##
-                doDisconnect()
-
-            elif userInput == "7":
-                ##DIAGNOSTICS##
-                print(myProfile.serialize()) 
-
-            else:
-                ##BOGUS##
-                print("What?")
-
-            print(menu)
+        try:
             userInput = input("Command?\n")
+        except KeyboardInterrupt:
+            print("Rogue client...")
+            doDisconnect()
+        try:
+            while True:
+                if userInput == "1":
+                    ##INSERT##
+                    insertFile()
+
+                elif userInput == "2":
+                    ##REMOVE##
+                    removeKey()
+
+                elif userInput == "3":
+                    ##GET##
+                    getFile()
+
+                elif userInput == "4":
+                    ##EXISTS##
+                    getExists()
+
+                elif userInput == "5":
+                    ##OWNS##
+                    request_owns()
+
+                elif userInput == "6":
+                    ##DISCONNET##
+                    doDisconnect()
+
+                elif userInput == "7":
+                    ##DIAGNOSTICS##
+                    print(myProfile.serialize()) 
+
+                else:
+                    ##BOGUS##
+                    print("What?")
+
+                print(menu)
+                userInput = input("Command?\n")
+
+        except KeyboardInterrupt:
+            print("Rogue client...")
+            doDisconnect()
+
     else:
         pass
 else:
