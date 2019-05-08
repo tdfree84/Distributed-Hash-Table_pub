@@ -4,9 +4,6 @@ class PeerProfile:
         
         myAddress: tuple( getLocalIPAddress(), int(port) )
 
-        minHash: int( getHashIndex((getLocalIPAddress(), int(port))) )
-        maxHash: int( getHashIndex((getLocalIPAddress(), int(port))) - 1 )
-
         fingerTable: { key = getHashIndex((getLocalIPAddress(), int(port))) : value = str(getLocalIPAddress():port), ... }
 
         successor: str( getLocalIPAddress() + ":" + port )
@@ -22,7 +19,7 @@ class PeerProfile:
         self.locked = False
 
     def myAddrString(self):
-        ''' Return my address in form (string: "ip:port"). ''':w
+        ''' Return my address in form (string: "ip:port"). '''
 
         return self.myAddress[0]+":"+str(self.myAddress[1])
 

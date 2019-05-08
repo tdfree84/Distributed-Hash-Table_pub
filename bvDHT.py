@@ -12,7 +12,6 @@ from peerProfile import *
 
 menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\nChoose 7 for: finger table."
 
-
 #######################
 ###  DHT functions  ###
 #######################
@@ -28,7 +27,6 @@ menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: ge
         removeKey
         doDisconnect
 '''
-
 
 def trueOwner(number):
     ''' Searches the DHT looking for the REAL owner of a hash.
@@ -730,7 +728,7 @@ if len(sys.argv) == 1:
 
     print(menu)
     #waiting for commands
-    userInput = input("Command?")
+    userInput = input("Command?\n")
     while userInput != "disconnect":
         print("Running")
 
