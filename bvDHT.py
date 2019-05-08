@@ -730,7 +730,6 @@ if len(sys.argv) == 1:
     #waiting for commands
     userInput = input("Command?\n")
     while userInput != "disconnect":
-        print("Running")
 
         if userInput == "1":
             ##INSERT##

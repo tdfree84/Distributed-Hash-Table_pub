@@ -27,12 +27,12 @@ class PeerProfile:
         ''' Return a string version of all details of the class. '''
 
         inf = ''
-        inf += "address " + self.myAddrString() + "\n"
+        inf += "Address: " + self.myAddrString() + "\n"
 
         for f in self.fingerTable:
                 inf += str(f) + ": "
                 inf += self.fingerTable[f] + "\n"
 
-        inf += self.successor + "\n"
+        inf += "Successor: " + self.successor + "\n"
         return inf
 
