@@ -12,16 +12,34 @@ from peerProfile import *
 
 menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\nChoose 7 for: finger table."
 
-####################
-# Helper functions #
-####################
+#######################
+###  DHT functions  ###
+#######################
+''' The following functions carry out DHT methods. 
+
+    The functions are as follows in this order:
+        trueOwner
+        owns
+        requestOwns
+        insertFile
+        getFile
+        getExists
+        removeKey
+        doDisconnect
+'''
 
 def trueOwner(number):
+    ''' Searches the DHT looking for the REAL owner of a hash.
+        With certainty, the result of this function IS the owner. 
+        
+        param: hash (int)
+        return: owner (string of form "ip:port")
+    '''
 
-    candidate = owns(number)
+    candidate = owns(number) # First candidate to compare to
     temp = candidate
     returned_peer = ''
-    while candidate != returned_peer: 
+    while candidate != returned_peer:
         candidate = temp
         conn = socket(AF_INET, SOCK_STREAM)
         connIP = candidate.split(':')[0]
@@ -39,7 +57,13 @@ def trueOwner(number):
     return temp # If here, temp is the true owner
 
 def owns(number):
-    ''' Find the closest person to the hash number requested. '''
+    ''' Find the closest person to the hash number requested. 
+        This is only who THIS person knows. 
+        
+        param: hash (int)
+        return: owner (string of form "ip:port")
+    ''' 
+
     myHash = getHashIndex(myProfile.myAddress)
     
     s = myProfile.successor
@@ -100,7 +124,7 @@ def owns(number):
     return myProfile.fingerTable[hashes[0]]
 
 def request_owns():
-    ''' Request an owns query from a peer. '''
+    ''' Search for the owner of a hash. '''
 
     k = input("Enter a key: ")
     hashed_key = int.from_bytes(hashlib.sha1(k.encode()).digest(), byteorder="big")
@@ -273,7 +297,8 @@ def removeKey():
     return
 
 def doDisconnect():
-    ''' Disconncet from the DHT.  '''
+    ''' Disconncet from the DHT.
+        Assures your successor is willing to accept your data.'''
 
     #hash index of our address -1
     k = getHashIndex(myProfile.myAddress)-1
@@ -354,7 +379,11 @@ def doDisconnect():
 #################
 
 def handlePeer(peerInfo):
-    ''' handlePeer receives commands from a client sending requests. '''
+    ''' handlePeer receives commands from a client sending requests.
+        This is the function that responds to outside (peer) commands. 
+        
+        param: connection object retrieved from listener.accept
+    '''
 
     #handle a new client that connects
     peerConn, peerAddr = peerInfo
@@ -649,7 +678,10 @@ def handlePeer(peerInfo):
 
 
 def waitForPeerConnections(listener):
-    ''' waitForPeerConnections listens for other peers to connect to us and spawns off a new thread for each peer that connects. '''
+    ''' waitForPeerConnections listens for other peers to connect to us and spawns off a new thread for each peer that connects. 
+        
+        param: listener object created for peers to connect to
+        '''
 
     while True:
         peerInfo = listener.accept()
@@ -681,6 +713,8 @@ myProfile = ''
 
 # Seed client is len == 1
 if len(sys.argv) == 1:
+    ''' Running this file as a seed client for a DHT. '''
+
     #set up our own thread to start listening for clients
     print("This is a seed client")
     threading.Thread(target=waitForPeerConnections, args = (listener,), daemon=True).start()
@@ -694,7 +728,7 @@ if len(sys.argv) == 1:
 
     print(menu)
     #waiting for commands
-    userInput = input("Command?")
+    userInput = input("Command?\n")
     while userInput != "disconnect":
         print("Running")
 
@@ -735,6 +769,12 @@ if len(sys.argv) == 1:
 
 # Connecting client passes arguments of ip and port
 elif len(sys.argv) == 3:
+    ''' This peer is connecting to the DHT via contacting the real owner of their hash. 
+        
+        param1: ip
+        param2: port
+    '''    
+
     #this is for any peer trying to connect to another peer
     #set up our own thread to start listening for clients
     threading.Thread(target=waitForPeerConnections, args = (listener,), daemon=True).start()
