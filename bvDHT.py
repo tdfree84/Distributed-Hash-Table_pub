@@ -843,7 +843,6 @@ elif len(sys.argv) == 3:
         peerSuccessor1 = peerSuccessor1[0] +":"+ str(peerSuccessor1[1])
         peerSuccessor2 = peerSuccessor2[0] +":"+ str(peerSuccessor2[1])
 
-
         numItems = recvInt(peerConn)
         if numItems == 0:
             print("Received zero files when connecting...")
