@@ -1,3 +1,3 @@
-##**Definition of a distributed hash table from [Wikipedia](https://en.wikipedia.org/wiki/Distributed_hash_table):**
+**Definition of a distributed hash table from [Wikipedia](https://en.wikipedia.org/wiki/Distributed_hash_table):**
 
 A distributed hash table (DHT) is a class of a decentralized distributed system that provides a lookup service similar to a hash table:(key, value) pairs are stored in a DHT, and any participating node can efficiently retrieve the value associated with a given key. Keys are unique identifiers which map to particular values, which in turn can be anything from addresses, to documents, to arbitrary data.[1] Responsibility for maintaining the mapping from keys to values is distributed among the nodes, in such a way that a change in the set of participants causes a minimal amount of disruption. This allows a DHT to scale to extremely large numbers of nodes and to handle continual node arrivals, departures, and failures. 
