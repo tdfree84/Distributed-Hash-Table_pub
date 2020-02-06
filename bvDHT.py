@@ -9,6 +9,7 @@ import hashlib
 from net_functions import *
 from hash_functions import *
 from peerProfile import *
+from time import sleep
 
 menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\nChoose 7 for: finger table."
 
@@ -684,6 +685,7 @@ def waitForPeerConnections(listener):
         '''
 
     while True:
+        sleep(1)
         peerInfo = listener.accept()
         threading.Thread(target=handlePeer, args = (peerInfo,), daemon=True).start()
 
