@@ -10,6 +10,7 @@ from net_functions import *
 from hash_functions import *
 from peerProfile import *
 from time import sleep
+from os import path
 
 menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\nChoose 7 for: finger table."
 
@@ -715,6 +716,10 @@ keySpaceRanges = 2**160/5
 randKeyRange = random.randint(0, keySpaceRanges)
 # THIS client's profile
 myProfile = ''
+
+# Ensure we have repo folder
+if not path.exists('repo/'):
+    os.mkdir('repo')
 
 # Seed client is len == 1
 if len(sys.argv) == 1:
