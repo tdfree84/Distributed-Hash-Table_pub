@@ -389,6 +389,7 @@ def handlePeer(peerInfo):
     #handle a new client that connects
     peerConn, peerAddr = peerInfo
     while True:
+        sleep(1)
         #begin waiting for protocol messages
 
         conMsg = recvAll(peerConn, 3)
