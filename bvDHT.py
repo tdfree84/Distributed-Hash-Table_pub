@@ -810,6 +810,8 @@ elif len(sys.argv) == 3:
     myAddressString = myAddress[0] + ":" + str(myAddress[1])
     myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,myAddressString,myAddressString)
 
+    print("my profile at first: ", myProfile.serialize())
+
     # figuring out who really owns the space where we will be inserted
     # by running true owns on our hash
     # then, connecting to that peer by sending "CON"
@@ -835,19 +837,22 @@ elif len(sys.argv) == 3:
 
         # Gathering info for our profile
         # Add ourselves to the finger table
-        fingerTable[getHashIndex((getLocalIPAddress(), int(port)))] = myAddressString
+        #fingerTable[getHashIndex((getLocalIPAddress(), int(port)))] = myAddressString
 
         # Finish out rest of connection protocol after we have the ok to continue #
         peerSuccessor1 = recvAddress(peerConn)
         # Add who we connected to to our finger table
         fingerTable[getHashIndex(peerSuccessor1)] = peerSuccessor1[0]+":"+str(peerSuccessor1[1])
+        print("finger table s1:",fingerTable)
 
         peerSuccessor2 = recvAddress(peerConn)
         # Add who we connected to to our finger table
         fingerTable[getHashIndex(peerSuccessor2)] = peerSuccessor2[0]+":"+str(peerSuccessor2[1])
+        print("finger table s2:",fingerTable)
 
         if peerSuccessor1 == peerSuccessor2:
             fingerTable[getHashIndex(peerSuccessor2)] = myAddressString
+            print("finger table s3:",fingerTable)
             peerSuccessor2 = myAddressString
 
         peerSuccessor1 = peerSuccessor1[0] +":"+ str(peerSuccessor1[1])
@@ -869,8 +874,10 @@ elif len(sys.argv) == 3:
             peerConn.send("T".encode())
         # End connection protocol #
 
+        print("finger table s4:",fingerTable)
         # Initializing my peer profile
         myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,peerSuccessor1,peerSuccessor2)
+        print("my profile at second: ", myProfile.serialize())
 
         #recv all protocol messages from peer we connected to
         print(menu)
