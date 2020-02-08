@@ -1,12 +1,12 @@
 import pytest
-from dhti import *
+from tfbvDHT.dhti import *
+
+IPPORTFILENAME = '/home/tyler23/Documents/school/projects_class/Distributed-Hash-Table/tests/IPPORT.txt'
 
 @pytest.fixture(scope='function')
 def new_dhti():
     cfg = DHTInterface()
-    IP = input("What IP? ")
-    port = input("What port? ")
-    cfg.set_connection(IP,port)
+    cfg.read_and_set_connection(IPPORTFILENAME)
     yield cfg
     cfg.close_connection()
 

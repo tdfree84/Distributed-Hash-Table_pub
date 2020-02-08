@@ -1,6 +1,6 @@
 from socket import *
-from net_functions import *
-from hash_functions import getHash
+from tfbvDHT.net_functions import *
+from tfbvDHT.hash_functions import getHash
 
 # Class to interact with DHT via network protocol
 class DHTInterface:
@@ -15,6 +15,17 @@ class DHTInterface:
             return getHash(key.encode())
         else:
             return getHash(key)
+
+    # Read ip/port from local file named IPPORT.txt
+    def read_and_set_connection(self, file_name):
+        IPPORT = None
+        with open(file_name, 'r') as f:
+            line = f.readline()
+            try:
+                IPPORT = line.split(':')
+            except:
+                raise("IPPORT file was not proper.")
+        self.set_connection(IPPORT[0], int(IPPORT[1]))
 
     # Set connection
     def set_connection(self, peerIP, peerPort):
