@@ -1,5 +1,5 @@
 import pytest
-from tfbvDHT.dhti import *
+from tfjfbvDHT.dhti import *
 
 IPPORTFILENAME = '/home/tyler23/Documents/school/projects_class/Distributed-Hash-Table/tests/IPPORT.txt'
 

@@ -1,6 +1,6 @@
 from socket import *
-from tfbvDHT.net_functions import *
-from tfbvDHT.hash_functions import getHash
+from tfjfbvDHT.net_functions import *
+from tfjfbvDHT.hash_functions import getHash
 
 # Class to interact with DHT via network protocol
 class DHTInterface:
