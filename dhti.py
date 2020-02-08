@@ -75,4 +75,4 @@ class DHTInterface:
 
         sendKey(self.conn, key_to_send)
         response1 = recvAll(self.conn, 1)
-        print("Response:",response1.decode())
+        return response1.decode()
