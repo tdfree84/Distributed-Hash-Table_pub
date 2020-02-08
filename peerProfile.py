@@ -34,5 +34,6 @@ class PeerProfile:
                 inf += self.fingerTable[f] + "\n"
 
         inf += "Successor: " + self.successor + "\n"
+        inf += "Successor2: " + self.successorTwo + "\n"
         return inf
 

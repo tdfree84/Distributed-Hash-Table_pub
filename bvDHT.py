@@ -806,11 +806,9 @@ elif len(sys.argv) == 3:
     # setting up info for our peer profile
     # adding who we just connected to to our finger table
     myAddress = (getLocalIPAddress(), port)
-    fingerTable[getHashIndex((peerIP, peerPort))] = peerIP + ":" + str(peerPort)
+    fingerTable[getHashIndex((peerIP, peerPort))] = peerIP + ":" + str(peerPort) # add peer
     myAddressString = myAddress[0] + ":" + str(myAddress[1])
     myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,myAddressString,myAddressString)
-
-    print("my profile at first: ", myProfile.serialize())
 
     # figuring out who really owns the space where we will be inserted
     # by running true owns on our hash
@@ -841,22 +839,21 @@ elif len(sys.argv) == 3:
 
         # Finish out rest of connection protocol after we have the ok to continue #
         peerSuccessor1 = recvAddress(peerConn)
+        print("Received sucessor one:",peerSuccessor1)
         # Add who we connected to to our finger table
         fingerTable[getHashIndex(peerSuccessor1)] = peerSuccessor1[0]+":"+str(peerSuccessor1[1])
-        print("finger table s1:",fingerTable)
 
         peerSuccessor2 = recvAddress(peerConn)
+        print("Received sucessor one:",peerSuccessor1)
         # Add who we connected to to our finger table
         fingerTable[getHashIndex(peerSuccessor2)] = peerSuccessor2[0]+":"+str(peerSuccessor2[1])
-        print("finger table s2:",fingerTable)
-
-        if peerSuccessor1 == peerSuccessor2:
-            fingerTable[getHashIndex(peerSuccessor2)] = myAddressString
-            print("finger table s3:",fingerTable)
-            peerSuccessor2 = myAddressString
 
         peerSuccessor1 = peerSuccessor1[0] +":"+ str(peerSuccessor1[1])
         peerSuccessor2 = peerSuccessor2[0] +":"+ str(peerSuccessor2[1])
+
+        # Ensure we are not our own successor
+        if peerSuccessor1[0] == myAddress[0] and peerSuccessor1[1] == myAddress[1]:
+            peerSuccessor1 = peerIP +":"+ str(peerPort)
 
         numItems = recvInt(peerConn)
         if numItems == 0:
@@ -874,10 +871,9 @@ elif len(sys.argv) == 3:
             peerConn.send("T".encode())
         # End connection protocol #
 
-        print("finger table s4:",fingerTable)
         # Initializing my peer profile
+        fingerTable[getHashIndex((getLocalIPAddress(), port))] = getLocalIPAddress() + ":" + str(port) # add ourselves
         myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,peerSuccessor1,peerSuccessor2)
-        print("my profile at second: ", myProfile.serialize())
 
         #recv all protocol messages from peer we connected to
         print(menu)
