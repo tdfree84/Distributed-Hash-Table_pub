@@ -1,3 +1,9 @@
+'''
+    The following Distributed Hash Table code was constructed in joint between Jack Fordyce and Tyler Freese.
+'''
+
+
+
 #!/usr/bin/python3
 from socket import *
 import sys
