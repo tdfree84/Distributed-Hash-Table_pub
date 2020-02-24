@@ -4,10 +4,15 @@ from tfjfbvDHT.hash_functions import getHash
 
 # Class to interact with DHT via network protocol
 class DHTInterface:
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.conn = None
         self.peerIP = None
         self.peerPort = None
+        self.PEER_FILE_IP_PORT = None
+
+        if "ipport_file" in kwargs.keys():
+            self.PEER_FILE_IP_PORT = kwargs["ipport_file"]
+
 
     # Make sure key is sendable
     def prepKey(self, key):
@@ -24,7 +29,7 @@ class DHTInterface:
             return val
 
 
-    # Read ip/port from local file named IPPORT.txt
+    # Read ip/port from local file
     def read_and_set_connection(self, file_name):
         IPPORT = None
         with open(file_name, 'r') as f:
@@ -32,7 +37,7 @@ class DHTInterface:
             try:
                 IPPORT = line.split(':')
             except:
-                raise("IPPORT file was not proper.")
+                raise BaseException("IPPORT file was not proper.")
         self.peerIP = IPPORT[0]
         self.peerPort = IPPORT[1]
         self.set_connection(IPPORT[0], int(IPPORT[1]))
@@ -50,7 +55,7 @@ class DHTInterface:
             print("Connected")
         except:
             self.close_connection()
-            raise("Could not connect to",peerIP,peerPort)
+            raise BaseException("Could not connect to",peerIP,peerPort)
 
     # Find who we are supposed to be connected to and connect to them
     def set_true_connection(self, key):
@@ -63,17 +68,16 @@ class DHTInterface:
             try:
                 self.conn.close()
             except:
-                raise("Couldn't close connection. Hard reset")
+                raise BaseException("Couldn't close connection. Hard reset")
         self.conn = None
-        self.peerIP = None
-        self.peerPort = None
 
     # Inserting value into DHT
     def insert(self, key, value):
+        self.read_and_set_connection(self.PEER_FILE_IP_PORT)
         self.set_true_connection(key)
 
         if self.conn is None:
-            raise("Not connected to a peer")
+            raise BaseException("Not connected to a peer")
         self.conn.send("INS".encode())
         sendKey(self.conn, self.prepKey(key))
 
@@ -88,10 +92,11 @@ class DHTInterface:
 
     # Removing value from DHT
     def remove(self, key):
+        self.read_and_set_connection(self.PEER_FILE_IP_PORT)
         self.set_true_connection(key)
 
         if self.conn is None:
-            raise("Not connected to a peer")
+            raise BaseException("Not connected to a peer")
         self.conn.send("REM".encode())
         sendKey(self.conn, self.prepKey(key))
         response1 = recvAll(self.conn, 1)
@@ -99,10 +104,11 @@ class DHTInterface:
 
     # Getting value from the DHT by key
     def get(self, key):
+        self.read_and_set_connection(self.PEER_FILE_IP_PORT)
         self.set_true_connection(key)
 
         if self.conn is None:
-            raise("Not connected to a peer")
+            raise BaseException("Not connected to a peer")
         self.conn.send("GET".encode())
         sendKey(self.conn, self.prepKey(key))
         response1 = recvAll(self.conn, 1)
@@ -113,10 +119,11 @@ class DHTInterface:
 
     # Checking for existence of a key
     def exists(self, key):
+        self.read_and_set_connection(self.PEER_FILE_IP_PORT)
         self.set_true_connection(key)
 
         if self.conn is None:
-            raise("Not connected to a peer")
+            raise BaseException("Not connected to a peer")
         self.conn.send("EXI".encode())
 
         key_to_send = self.prepKey(key)
@@ -150,7 +157,7 @@ class DHTInterface:
     # Ask for who owns the space
     def owns(self, key):
         if self.conn is None:
-            raise("Not connected to a peer")
+            raise BaseException("Not connected to a peer")
         self.conn.send("OWN".encode())
 
         key_to_send = self.prepKey(key)
