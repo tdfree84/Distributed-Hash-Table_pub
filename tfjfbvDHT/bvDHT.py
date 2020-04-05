@@ -14,11 +14,11 @@ import random
 import hashlib
 from net_functions import *
 from hash_functions import *
-from peerProfile import *
+from peerProfile import PeerProfile
 from time import sleep
 from os import path
 
-menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\nChoose 7 for: finger table."
+menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\nChoose 7 for: finger table.\nChoose 8 for: update peer profile.\n"
 
 #######################
 ###  DHT functions  ###
@@ -776,6 +776,10 @@ if len(sys.argv) == 1:
                 ##DIAGNOSTICS##
                 print(myProfile.serialize()) 
 
+            elif userInput == "8":
+                ##UPDATE PROFILE##
+                myProfile.updateProfile(trueOwner) 
+
             else:
                 ##BOGUS##
                 print("What?")
@@ -913,6 +917,10 @@ elif len(sys.argv) == 3:
                 elif userInput == "7":
                     ##DIAGNOSTICS##
                     print(myProfile.serialize()) 
+
+                elif userInput == "8":
+                    ##UPDATE PROFILE##
+                    myProfile.updateProfile(trueOwner) 
 
                 else:
                     ##BOGUS##
