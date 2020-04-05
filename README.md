@@ -9,7 +9,7 @@
 #### Prerequisites
 - `sudo apt install git python3-pip`
 - `pip3 install pipenv`
-- `export PATH="${HOME}/.local/bin:$PATH"`
+
 #### Setup
 1. Clone `https://github.com/tdfree84/Distributed-Hash-Table.git`
 2. `cd` into directory
@@ -19,5 +19,5 @@
 #### Running
 * In order for our implementation to work properly, the `peerProfile.py`, `net_functions.py`, `hash_functions.py` files are required
 * To start a **seed client**, simply enter: `python3 tfbvDHT/bvDHT.py`
-* For any **connecting clients**, use format: `python3 tfbvDHT/bvDHT IP Port`
+* For any **connecting clients**, use format: `python3 tfbvDHT/bvDHT.py IP Port`
 * To interact with the DHT locally, use the provided menu you will see upon start
