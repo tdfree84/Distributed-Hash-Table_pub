@@ -387,7 +387,8 @@ def doDisconnect():
 #################
 
 def handlePeer(peerInfo):
-    ''' handlePeer receives commands from a client sending requests.
+    ''' 
+        handlePeer receives commands from a client sending requests.
         This is the function that responds to outside (peer) commands. 
         
         param: connection object retrieved from listener.accept
@@ -540,7 +541,7 @@ def handlePeer(peerInfo):
 
             myProfile.locked = False
 
-            return 
+            #return 
 
         else:
             #send this if we don't own the space they want
@@ -669,7 +670,7 @@ def handlePeer(peerInfo):
         #if PUL is received, send T and close connection
         peerConn.send("T".encode())
         peerConn.close()
-        return
+        #return
 
     elif conMsg == "INF":
         #uses function in our class to put diagnostic information into a string and send to whoever requested
@@ -693,7 +694,9 @@ def waitForPeerConnections(listener):
 
     while True:
         peerInfo = listener.accept()
-        threading.Thread(target=handlePeer, args = (peerInfo,), daemon=True).start()
+        t1 = threading.Thread(target=handlePeer, args = (peerInfo,), daemon=True)
+        t1.start()
+        #t1.join() # Join = wait in C
 
 
 
