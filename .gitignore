@@ -2,6 +2,7 @@
 tfjfbvDHT/repo/
 tfjfbvDHT/repo/*
 *.swp
+*IPPORT.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
