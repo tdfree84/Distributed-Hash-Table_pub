@@ -14,11 +14,11 @@ import random
 import hashlib
 from net_functions import *
 from hash_functions import *
-from peerProfile import *
+from peerProfile import PeerProfile
 from time import sleep
 from os import path
 
-menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\nChoose 7 for: finger table."
+menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\nChoose 7 for: finger table.\nChoose 8 for: update peer profile.\n"
 
 #######################
 ###  DHT functions  ###
@@ -387,7 +387,8 @@ def doDisconnect():
 #################
 
 def handlePeer(peerInfo):
-    ''' handlePeer receives commands from a client sending requests.
+    ''' 
+        handlePeer receives commands from a client sending requests.
         This is the function that responds to outside (peer) commands. 
         
         param: connection object retrieved from listener.accept
@@ -540,7 +541,7 @@ def handlePeer(peerInfo):
 
             myProfile.locked = False
 
-            return 
+            #return 
 
         else:
             #send this if we don't own the space they want
@@ -669,7 +670,7 @@ def handlePeer(peerInfo):
         #if PUL is received, send T and close connection
         peerConn.send("T".encode())
         peerConn.close()
-        return
+        #return
 
     elif conMsg == "INF":
         #uses function in our class to put diagnostic information into a string and send to whoever requested
@@ -693,7 +694,9 @@ def waitForPeerConnections(listener):
 
     while True:
         peerInfo = listener.accept()
-        threading.Thread(target=handlePeer, args = (peerInfo,), daemon=True).start()
+        t1 = threading.Thread(target=handlePeer, args = (peerInfo,), daemon=True)
+        t1.start()
+        #t1.join() # Join = wait in C
 
 
 
@@ -775,6 +778,10 @@ if len(sys.argv) == 1:
             elif userInput == "7":
                 ##DIAGNOSTICS##
                 print(myProfile.serialize()) 
+
+            elif userInput == "8":
+                ##UPDATE PROFILE##
+                myProfile.updateProfile(trueOwner) 
 
             else:
                 ##BOGUS##
@@ -913,6 +920,10 @@ elif len(sys.argv) == 3:
                 elif userInput == "7":
                     ##DIAGNOSTICS##
                     print(myProfile.serialize()) 
+
+                elif userInput == "8":
+                    ##UPDATE PROFILE##
+                    myProfile.updateProfile(trueOwner) 
 
                 else:
                     ##BOGUS##

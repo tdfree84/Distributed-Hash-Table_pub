@@ -13,7 +13,6 @@ class DHTInterface:
         if "ipport_file" in kwargs.keys():
             self.PEER_FILE_IP_PORT = kwargs["ipport_file"]
 
-
     # Make sure key is sendable
     def prepKey(self, key):
         if type(key) is str:
@@ -27,7 +26,6 @@ class DHTInterface:
             return val.encode()
         else:
             return val
-
 
     # Read ip/port from local file
     def read_and_set_connection(self, file_name):
