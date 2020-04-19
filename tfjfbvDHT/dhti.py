@@ -10,8 +10,27 @@ class DHTInterface:
         self.peerPort = None
         self.PEER_FILE_IP_PORT = None
 
-        if "ipport_file" in kwargs.keys():
+        passed_keys = kwargs.keys() # Grab keys passed
+
+        # Set peer file
+        if "ipport_file" in passed_keys:
             self.PEER_FILE_IP_PORT = kwargs["ipport_file"]
+
+        # Set ip/port
+        if "peerIP" in passed_keys and "peerPort" in passed_keys:
+            self.peerIP = kwargs['peerIP']
+            self.peerPort = kwargs['peerPort']
+
+    # Help message
+    def help(self):
+        print("Available methods:")
+        methods = [
+            "get(key)",
+            "insert(key, value)",
+            "remove(key)",
+            "exists(key)",
+            "owns(key)",
+        ]
 
     # Make sure key is sendable
     def prepKey(self, key):
@@ -29,19 +48,39 @@ class DHTInterface:
 
     # Read ip/port from local file
     def read_and_set_connection(self, file_name):
+        '''
+            Sets connection to already known peerIp and peerPort,
+            or reads from provided file name to get
+            a connection.
+            Calls set_connection to set the connection.
+        '''
+        # If file has already been read
+        # set connection with known IP and Port
+        if self.peerIP is not None and self.peerPort is not None:
+            self.set_connection(self.peerIP, self.peerPort)
+            return
+
+        # Need to read from file
         IPPORT = None
-        with open(file_name, 'r') as f:
-            line = f.readline()
-            try:
-                IPPORT = line.split(':')
-            except:
-                raise BaseException("IPPORT file was not proper.")
+        try:
+            with open(file_name, 'r') as f:
+                line = f.readline()
+                try:
+                    IPPORT = line.split(':')
+                except:
+                    raise Exception("IPPORT file was not proper.")
+        except:
+            raise Exception("IPPORT file DNE")
         self.peerIP = IPPORT[0]
         self.peerPort = IPPORT[1]
         self.set_connection(IPPORT[0], int(IPPORT[1]))
 
     # Set connection
     def set_connection(self, peerIP, peerPort):
+        '''
+            Sets the self.conn to a connection
+            to parameters peerIP and peerPort.
+        '''
         if self.conn is not None:
             self.close_connection()
 
@@ -50,23 +89,32 @@ class DHTInterface:
         self.peerPort = peerPort
         try:
             self.conn.connect((peerIP, int(peerPort)))
-            print("Connected")
+            #print("Connected")
         except:
             self.close_connection()
             raise BaseException("Could not connect to",peerIP,peerPort)
 
     # Find who we are supposed to be connected to and connect to them
     def set_true_connection(self, key):
+        '''
+            Obtains the true owner to a key
+            passed. A connection will then be 
+            set to that owner.
+        '''
         TO = self.trueOwner(key).split(':')
         self.set_connection(TO[0], TO[1])
 
     # Close connection
     def close_connection(self):
+        '''
+            Closes the connection and sets the conn
+            object to None.
+        '''
         if self.conn is not None:
             try:
                 self.conn.close()
             except:
-                raise BaseException("Couldn't close connection. Hard reset")
+                print("Couldn't close connection. Hard reset")
         self.conn = None
 
     # Inserting value into DHT
@@ -155,7 +203,7 @@ class DHTInterface:
     # Ask for who owns the space
     def owns(self, key):
         if self.conn is None:
-            raise BaseException("Not connected to a peer")
+            self.read_and_set_connection(self.PEER_FILE_IP_PORT)
         self.conn.send("OWN".encode())
 
         key_to_send = self.prepKey(key)
