@@ -41,6 +41,12 @@ class PeerProfile:
         inf += "Successor2: " + self.successorTwo + "\n"
         return inf
 
+
+
+    '''
+        DO NOT USE
+        DEEMED NOT USEFUL AT THE MOMENT
+    '''
     def updateProfile(self, trueOwner):
         '''
             Updates the finger table of the peer with more recent peers
@@ -69,7 +75,8 @@ class PeerProfile:
             res = recvAll(conn, 1)
             contacted_successor_one = res.decode() == 'T' # Mark we contacted our successor
             if res.decode() != 'T':
-                raise Exception("Did not get back T from pulse")
+                print("Did not get back a T from pulse")
+                #raise Exception("Did not get back T from pulse")
             self.successor = connIP + ':' + str(connPort)
             conn.close()
             conn = None
