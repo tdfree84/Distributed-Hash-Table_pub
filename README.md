@@ -18,8 +18,8 @@
 
 #### Running
 * In order for our implementation to work properly, the `peerProfile.py`, `net_functions.py`, `hash_functions.py` files are required
-* To start a **seed client**, simply enter: `python3 tfbvDHT/bvDHT.py`
-* For any **connecting clients**, use format: `python3 tfbvDHT/bvDHT.py IP Port`
+* To start a **seed client**, simply enter: `python3 tfjfbvDHT/bvDHT.py`
+* For any **connecting clients**, use format: `python3 tfjfbvDHT/bvDHT.py IP Port`
 * To interact with the DHT locally, use the provided menu you will see upon start
 
 **Definition of a distributed hash table from [Wikipedia](https://en.wikipedia.org/wiki/Distributed_hash_table):**
