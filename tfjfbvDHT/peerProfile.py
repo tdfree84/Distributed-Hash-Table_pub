@@ -13,6 +13,11 @@ class PeerProfile:
         successor: str( getLocalIPAddress() + ":" + port )
         successorTwo: str( getLocalIPAddress() + ":" + port )
 
+        Successors' hashes are HIGHER than ours.
+        That is, the successors are at the end of our keyspace.
+        The end being from our keyspace to addresses greater than ours
+        up until the next peer.
+
     '''
 
     def __init__(self, _myAddr,_fingerTable, _successor, _successorTwo):
@@ -44,6 +49,21 @@ class PeerProfile:
 
 
     '''
+        FIX: Originally thought successors were behind us.
+        That is, originally thought successors' hashes were lower than ours.
+        Turns out, they are HIGHER. It's us -> successor1 -> successor2.
+        Can see this because trueOwner(key) searches from HIGH to low looking for owners.
+        In the CON protocol, we ask for the trueOwner of the connecting peer's hash.
+        Therefore, searching HIGH to low means we would own it if it was between
+        us and the next guy at a higher address!
+
+        This current function INCORRECTLY updates the peerProfile.
+        It searches behind us and then two behind us. This completely
+        reverses how the table (circle) NEEDS to be.
+
+        Proposed fixes - check our successor's PULSE.
+        check second successor's PULSE.
+        NOT BEHIND US!!!
         DO NOT USE
         DEEMED NOT USEFUL AT THE MOMENT
     '''
