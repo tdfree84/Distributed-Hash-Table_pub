@@ -146,6 +146,8 @@ class DHTInterface:
         sendVal(self.conn, self.prepVal(value))
     
         response2 = recvAll(self.conn, 1)
+
+        self.close_connection()
         return response2.decode()
 
     # Removing value from DHT
@@ -157,6 +159,8 @@ class DHTInterface:
         self.conn.send("REM".encode())
         sendKey(self.conn, self.prepKey(key))
         response1 = recvAll(self.conn, 1)
+
+        self.close_connection()
         return response1.decode()
 
     # Getting value from the DHT by key
@@ -171,6 +175,8 @@ class DHTInterface:
         data = None
         if response1.decode() == 'T':
             data = recvVal(self.conn)
+        
+        self.close_connection()
         return (response1.decode(), data)
 
     # Checking for existence of a key
@@ -185,6 +191,8 @@ class DHTInterface:
 
         sendKey(self.conn, key_to_send)
         response1 = recvAll(self.conn, 1)
+
+        self.close_connection()
         return response1.decode()
 
     # Ask for who owns the space
@@ -198,6 +206,8 @@ class DHTInterface:
             to the key passed.
         '''
         self.set_true_connection(key)
+
+        self.close_connection()
         return self.peerIP + ':' + str(self.peerPort)
 
     # Finding true owner
