@@ -28,7 +28,7 @@ menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: ge
     The functions are as follows in this order:
         trueOwner
         owns
-        requestOwns
+        request_owns
         insertFile
         getFile
         getExists
@@ -39,6 +39,10 @@ menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: ge
 def trueOwner(number):
     ''' Searches the DHT looking for the REAL owner of a hash.
         With certainty, the result of this function IS the owner. 
+        Successors' hashes are HIGHER than ours.
+        That is, the successors are at the end of our keyspace.
+        The end being from our keyspace to addresses greater than ours
+        up until the next peer.
         
         param: hash (int)
         return: owner (string of form "ip:port")
@@ -113,6 +117,7 @@ def owns(number):
                     conn.connect((connIP, connPort))
                     conn.send("ABD".encode())
                     secondSuc = recvAddress(conn)
+                    print(f"client in trouble received: {secondSuc}")
                     myProfile.successorTwo = secondSuc[0] + ":" + str(secondSuc[1])
                     conn.close()
 
@@ -678,7 +683,8 @@ def handlePeer(peerInfo):
         sendVal(peerConn, fingerString)
 
     elif conMsg == "ABD":
-        successor = myProfile.successor
+        successor = myProfile.successor.split(':')
+        print(f"abd successor:{successor}")
         successorIP = successor[0]
         successorPort = int(successor[1])
         sendAddress(peerConn, (successorIP, successorPort))
@@ -740,7 +746,7 @@ if len(sys.argv) == 1:
 
     # Initializing my peer profile
     myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,addr,addr)
-
+    
     print(menu)
     #waiting for commands
     try:
