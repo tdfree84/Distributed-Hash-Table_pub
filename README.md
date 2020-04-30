@@ -1,7 +1,7 @@
 # Welcome to Tyler and Jack's DHT
 
 #### Dependencies
-* python3 == 3.6.9
+* python3 == 3.8.2
 * pytest == 5.3.5
 * pipenv, version 2018.11.26
 * git version 2.17.1
