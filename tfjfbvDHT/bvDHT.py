@@ -1,3 +1,9 @@
+'''
+    The following Distributed Hash Table code was constructed in joint between Jack Fordyce and Tyler Freese.
+'''
+
+
+
 #!/usr/bin/python3
 from socket import *
 import sys
@@ -8,9 +14,11 @@ import random
 import hashlib
 from net_functions import *
 from hash_functions import *
-from peerProfile import *
+from peerProfile import PeerProfile
+from time import sleep
+from os import path
 
-menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\nChoose 7 for: finger table."
+menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: get.\nChoose 4 for: exists.\nChoose 5 for: owns.\nChoose 6 for: disconnect.\nChoose 7 for: finger table.\nChoose 8 for: update peer profile.\n"
 
 #######################
 ###  DHT functions  ###
@@ -20,7 +28,7 @@ menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: ge
     The functions are as follows in this order:
         trueOwner
         owns
-        requestOwns
+        request_owns
         insertFile
         getFile
         getExists
@@ -31,6 +39,10 @@ menu = "--MENU--\nChoose 1 for: insert.\nChoose 2 for: remove.\nChoose 3 for: ge
 def trueOwner(number):
     ''' Searches the DHT looking for the REAL owner of a hash.
         With certainty, the result of this function IS the owner. 
+        Successors' hashes are HIGHER than ours.
+        That is, the successors are at the end of our keyspace.
+        The end being from our keyspace to addresses greater than ours
+        up until the next peer.
         
         param: hash (int)
         return: owner (string of form "ip:port")
@@ -105,6 +117,7 @@ def owns(number):
                     conn.connect((connIP, connPort))
                     conn.send("ABD".encode())
                     secondSuc = recvAddress(conn)
+                    print(f"client in trouble received: {secondSuc}")
                     myProfile.successorTwo = secondSuc[0] + ":" + str(secondSuc[1])
                     conn.close()
 
@@ -379,7 +392,8 @@ def doDisconnect():
 #################
 
 def handlePeer(peerInfo):
-    ''' handlePeer receives commands from a client sending requests.
+    ''' 
+        handlePeer receives commands from a client sending requests.
         This is the function that responds to outside (peer) commands. 
         
         param: connection object retrieved from listener.accept
@@ -387,292 +401,293 @@ def handlePeer(peerInfo):
 
     #handle a new client that connects
     peerConn, peerAddr = peerInfo
-    while True:
-        #begin waiting for protocol messages
 
-        conMsg = recvAll(peerConn, 3)
-        conMsg = conMsg.decode()
-        if conMsg!='' and conMsg!='\n' and conMsg != ' ':
-            print("Incoming message: " + conMsg)
-        if conMsg == "CON":
-            #####################
-            #CONNECTION PROTOCOL#
-            #####################
-            while myProfile.locked:
-                pass
+    conMsg = recvAll(peerConn, 3)
+    conMsg = conMsg.decode()
+    if conMsg!='' and conMsg!='\n' and conMsg != ' ':
+        print("Incoming message: " + conMsg)
+    if conMsg == "CON":
+        #####################
+        #CONNECTION PROTOCOL#
+        #####################
+        while myProfile.locked:
+            sleep(1)
+            pass
 
-            #set lock to true
-            myProfile.locked = True
+        #set lock to true
+        myProfile.locked = True
 
-            #receive address of person trying to connect
-            peerIP, peerPort = recvAddress(peerConn)
-            print("THIS PERSON IS CONNECTING: " + peerIP + ":" + str(peerPort))
+        #receive address of person trying to connect
+        peerIP, peerPort = recvAddress(peerConn)
+        print("THIS PERSON IS CONNECTING: " + peerIP + ":" + str(peerPort))
 
-            #calculate our hash and peer's hash
-            peerHash = getHashIndex((peerIP, peerPort))
-            myHash = getHashIndex(myProfile.myAddress)
+        #calculate our hash and peer's hash
+        peerHash = getHashIndex((peerIP, peerPort))
+        myHash = getHashIndex(myProfile.myAddress)
 
-            #get our successor in order to send to person connecting
-            successor = myProfile.successor.split(":")
-            successorIP = successor[0]
-            successorPort = int(successor[1])
-            successorHash = getHashIndex((successorIP, successorPort))
-            
-            #get successor 2
-            successorTwo = myProfile.successorTwo.split(":")
-            successorTwoIP = successorTwo[0]
-            successorTwoPort = int(successorTwo[1])
-            successorTwoHash = getHashIndex((successorTwoIP, successorTwoPort))
-
-
-            #if we own the peer's hash, continue with protocol, else, send N and skip
-            if trueOwner(peerHash) == myProfile.myAddrString():
-                peerConn.send("T".encode())
-            else:
-                peerConn.send("N".encode())
-                myProfile.locked = False
-                continue
-
-            #update our fingertable by adding peer who just connected to us
-            fingerTable[getHashIndex((peerIP, int(peerPort)))] = peerIP + ":" + str(peerPort)
-
-            #send the address of our successor
-            sendAddress(peerConn, (successorIP, successorPort))
-
-            #send address of second successor
-            sendAddress(peerConn, (successorTwoIP, successorTwoPort))
-
-            #get file names from repo
-            fNameList = os.listdir('repo')
-            listToSend = []
-            for n in fNameList:
-                nInt = int(n)
-                if nInt < getHashIndex((successorIP, int(successorPort))) and nInt > getHashIndex((peerIP, int(peerPort))):
-                    listToSend.append(n)
-
-            #send number of files
-            sendInt(peerConn, len(listToSend))
-
-            #for number of items, send [key][valSize][val] to peer
-            for n in listToSend:
-                f = open('repo/' + n, 'rb')
-                fBytes = f.read()
-                sendKey(peerConn, int(n))
-                sendVal(peerConn, fBytes) 
-                f.close()
+        #get our successor in order to send to person connecting
+        successor = myProfile.successor.split(":")
+        successorIP = successor[0]
+        successorPort = int(successor[1])
+        successorHash = getHashIndex((successorIP, successorPort))
+        
+        #get successor 2
+        successorTwo = myProfile.successorTwo.split(":")
+        successorTwoIP = successorTwo[0]
+        successorTwoPort = int(successorTwo[1])
+        successorTwoHash = getHashIndex((successorTwoIP, successorTwoPort))
 
 
-            #receive a T from the client to say everything was received
-            tf = recvAll(peerConn, 1)
-            tf = tf.decode()
-            if tf == 'T':
-                #set successor to person who just connected to us
-                #they are now our new successor
-                #update second successor to old original successor
-                myProfile.successorTwo = myProfile.successor
-                myProfile.successor = peerIP + ":" + str(peerPort)
-
+        #if we own the peer's hash, continue with protocol, else, send N and skip
+        if trueOwner(peerHash) == myProfile.myAddrString():
+            peerConn.send("T".encode())
+        else:
+            peerConn.send("N".encode())
             myProfile.locked = False
+            return
 
-        elif conMsg == "DIS":
-            #####################
-            #DISCONNECT PROTOCOL#
-            #####################
-            while myProfile.locked:
-                pass
+        #update our fingertable by adding peer who just connected to us
+        fingerTable[getHashIndex((peerIP, int(peerPort)))] = peerIP + ":" + str(peerPort)
 
-            #set lock
-            myProfile.locked = True
+        #send the address of our successor
+        sendAddress(peerConn, (successorIP, successorPort))
 
-            peerAddr = recvAddress(peerConn)
-            peerAddrStr = peerAddr[0] + ":" + str(peerAddr[1])
-            if trueOwner(getHashIndex((peerAddr[0], peerAddr[1]))-1) == myProfile.myAddrString():
+        #send address of second successor
+        sendAddress(peerConn, (successorTwoIP, successorTwoPort))
 
-                #sending them a T if we own they space they want
-                peerConn.send('T'.encode())
+        #get file names from repo
+        fNameList = os.listdir('repo')
+        listToSend = []
+        for n in fNameList:
+            nInt = int(n)
+            if nInt < getHashIndex((successorIP, int(successorPort))) and nInt > getHashIndex((peerIP, int(peerPort))):
+                listToSend.append(n)
 
-                #receive address of our new successor
-                successor = recvAddress(peerConn)
-                successorIP = successor[0]
-                successorPort = successor[1]
+        #send number of files
+        sendInt(peerConn, len(listToSend))
 
-                #receive successor 2
-                successorTwo = recvAddress(peerConn)
-                successorTwoIP = successorTwo[0]
-                successorTwoPort = successorTwo[1]
-                successorTwoHash = getHashIndex((successorTwoIP, successorTwoPort))
-
-                #receive amount of files they want to send
-                numItems = recvInt(peerConn)
-
-                #for number of files, receive key and value and write it to file
-                print("Receiving data...")
-                for n in range(numItems):
-                    try:
-                        k = recvKey(peerConn)
-                        data = recvVal(peerConn)
-                        f = open('repo/' + str(k), 'wb')
-                        f.write(data)
-                        f.close()
-                    except:
-                        print("Failed to write some data when peer was disconnecting")
-
-                #send them a T, delete them from finger table and close connection
-                peerConn.send("T".encode())
-                del fingerTable[getHashIndex(peerAddr)]
-                peerConn.close()
-
-                #update our info
-                myProfile.successor = successorIP + ":" + str(successorPort)
-                myProfile.successorTwo = successorTwoIP + ":" + str(successorTwoPort)
-
-                fingerTable[getHashIndex((successorIP, int(successorPort)))] = successorIP + ":" + str(successorPort)
-
-                fingerTable[getHashIndex((successorTwoIP, int(successorTwoPort)))] = successorTwoIP + ":" + str(successorTwoPort)
-
-                myProfile.locked = False
-
-                break
-
-            else:
-                #send this if we don't own the space they want
-                peerConn.send("N".encode())
-                myProfile.locked = False
+        #for number of items, send [key][valSize][val] to peer
+        for n in listToSend:
+            f = open('repo/' + n, 'rb')
+            fBytes = f.read()
+            sendKey(peerConn, int(n))
+            sendVal(peerConn, fBytes) 
+            f.close()
 
 
+        #receive a T from the client to say everything was received
+        tf = recvAll(peerConn, 1)
+        tf = tf.decode()
+        if tf == 'T':
+            #set successor to person who just connected to us
+            #they are now our new successor
+            #update second successor to old original successor
+            myProfile.successorTwo = myProfile.successor
+            myProfile.successor = peerIP + ":" + str(peerPort)
 
-        elif conMsg == "INS":
-            #################
-            #INSERT PROTOCOL#
-            #################
-            while myProfile.locked:
-                pass
+        myProfile.locked = False
 
-            fileName = recvKey(peerConn)
+    elif conMsg == "DIS":
+        #####################
+        #DISCONNECT PROTOCOL#
+        #####################
+        while myProfile.locked:
+            sleep(1)
+            pass
 
-            successor = myProfile.successor.split(":")
+        #set lock
+        myProfile.locked = True
+
+        peerAddr = recvAddress(peerConn)
+        peerAddrStr = peerAddr[0] + ":" + str(peerAddr[1])
+        if trueOwner(getHashIndex((peerAddr[0], peerAddr[1]))-1) == myProfile.myAddrString():
+
+            #sending them a T if we own they space they want
+            peerConn.send('T'.encode())
+
+            #receive address of our new successor
+            successor = recvAddress(peerConn)
             successorIP = successor[0]
             successorPort = successor[1]
 
-            successorHash = getHashIndex((successorIP, int(successorPort)))
-            myHash = getHashIndex(myProfile.myAddress)
+            #receive successor 2
+            successorTwo = recvAddress(peerConn)
+            successorTwoIP = successorTwo[0]
+            successorTwoPort = successorTwo[1]
+            successorTwoHash = getHashIndex((successorTwoIP, successorTwoPort))
 
-            #if we own the space, send positive confirmation
-            #else, send N and skip
-            if trueOwner(fileName) == myProfile.myAddrString():
-                peerConn.send("T".encode())
-            else:
-                peerConn.send("N".encode())
-                continue
+            #receive amount of files they want to send
+            numItems = recvInt(peerConn)
+
+            #for number of files, receive key and value and write it to file
+            print("Receiving data...")
+            for n in range(numItems):
+                try:
+                    k = recvKey(peerConn)
+                    data = recvVal(peerConn)
+                    f = open('repo/' + str(k), 'wb')
+                    f.write(data)
+                    f.close()
+                except:
+                    print("Failed to write some data when peer was disconnecting")
+
+            #send them a T, delete them from finger table and close connection
+            peerConn.send("T".encode())
+            del fingerTable[getHashIndex(peerAddr)]
+            peerConn.close()
+
+            #update our info
+            myProfile.successor = successorIP + ":" + str(successorPort)
+            myProfile.successorTwo = successorTwoIP + ":" + str(successorTwoPort)
+
+            fingerTable[getHashIndex((successorIP, int(successorPort)))] = successorIP + ":" + str(successorPort)
+
+            fingerTable[getHashIndex((successorTwoIP, int(successorTwoPort)))] = successorTwoIP + ":" + str(successorTwoPort)
+
+            myProfile.locked = False
+
+            #return 
+
+        else:
+            #send this if we don't own the space they want
+            peerConn.send("N".encode())
+            myProfile.locked = False
 
 
-            #receive data, write it to file, send F
-            #if something fails, send F
+
+    elif conMsg == "INS":
+        #################
+        #INSERT PROTOCOL#
+        #################
+        while myProfile.locked:
+            pass
+
+        fileName = recvKey(peerConn) # Integer representation of file name (hash)
+
+        successor = myProfile.successor.split(":")
+        successorIP = successor[0]
+        successorPort = successor[1]
+
+        successorHash = getHashIndex((successorIP, int(successorPort))) # Not used
+        myHash = getHashIndex(myProfile.myAddress) # Not used
+
+        #if we own the space, send positive confirmation
+        #else, send N and skip
+        if trueOwner(fileName) == myProfile.myAddrString():
+            peerConn.send("T".encode())
+        else:
+            peerConn.send("N".encode())
+            return
+
+
+        #receive data, write it to file, send F
+        #if something fails, send F
+        try:
+            print("Inserting file...")
+            fileContent = recvVal(peerConn)
+            f = open('repo/' + str(fileName), 'wb')
+            f.write(fileContent)
+            f.close()
+            peerConn.send("T".encode())
+        except:
+            peerConn.send("F".encode())
+
+    elif conMsg == "OWN":
+        ##OWNS PROTOCOL##
+
+        #return person who we know to be closest in our finger table
+        key = recvKey(peerConn)
+        owner = owns(key)
+
+        ownerList = owner.split(":")
+        ownerIP = ownerList[0]
+        ownerPort = int(ownerList[1])
+        sendAddress(peerConn, (ownerIP, ownerPort))
+
+    elif conMsg == "GET":
+        ##GET PROTOCOL##
+        while myProfile.locked:
+            pass
+
+        key = recvKey(peerConn)
+
+        #if we own the space and we can find a corresponding file,
+        #send it, else send F
+        #if we don't own, send N
+        if trueOwner(key) == myProfile.myAddrString():
             try:
-                print("Inserting file...")
-                fileContent = recvVal(peerConn)
-                f = open('repo/' + str(fileName), 'wb')
-                f.write(fileContent)
-                f.close()
+                print("Sending file...")
+                f = open("repo/"+str(key), "rb")
+                fileToSend = f.read()
                 peerConn.send("T".encode())
+                sendVal(peerConn, fileToSend)
+                f.close()
             except:
                 peerConn.send("F".encode())
+        else:
+            peerConn.send("N".encode())
 
-        elif conMsg == "OWN":
-            ##OWNS PROTOCOL##
+    elif conMsg == "EXI":
+        ##EXISTS PROTOCOL##
 
-            #return person who we know to be closest in our finger table
-            key = recvKey(peerConn)
-            owner = owns(key)
+        #receive key
+        key = recvKey(peerConn)
 
-            ownerList = owner.split(":")
-            ownerIP = ownerList[0]
-            ownerPort = int(ownerList[1])
-            sendAddress(peerConn, (ownerIP, ownerPort))
+        #if trueOwner returns us, and we can find a file with that keyname, send a T
+        #if we can't find file, send F
+        #if we don't own the space, send N
+        if trueOwner(key) == myProfile.myAddrString():
+            try:
+                f=open("repo/"+str(key), "rb")
+                peerConn.send("T".encode())
+                f.close()
+            except:
+                peerConn.send("F".encode())
+        else:
+            peerConn.send("N".encode())
 
-        elif conMsg == "GET":
-            ##GET PROTOCOL##
-            while myProfile.locked:
-                pass
+    elif conMsg == "REM":
+        ##REMOVE PROTOCOL##
+        while myProfile.locked:
+            pass
 
-            key = recvKey(peerConn)
+        #receive key
+        key = recvKey(peerConn)
+        keyStr = str(key)
 
-            #if we own the space and we can find a corresponding file,
-            #send it, else send F
-            #if we don't own, send N
-            if trueOwner(key) == myProfile.myAddrString():
-                try:
-                    print("Sending file...")
-                    f = open("repo/"+str(key), "rb")
-                    fileToSend = f.read()
+        #call true owner on Key and it it is us, proceed
+        #if not, send and N
+        if trueOwner(key) == myProfile.myAddrString():
+            try:
+                print("Removing file...")
+                #try to remove data, if something fails, send an F
+                f=open("repo/"+keyStr, "rb")
+                os.remove("repo/"+keyStr)
+                #after attempting to remove, check to see if a path with that name still exists
+                if not (os.path.exists("repo/"+keyStr)):
                     peerConn.send("T".encode())
-                    sendVal(peerConn, fileToSend)
-                    f.close()
-                except:
-                    peerConn.send("F".encode())
-            else:
-                peerConn.send("N".encode())
+            except:
+                peerConn.send("F".encode())
+        else:
+            peerConn.send("N".encode())
 
-        elif conMsg == "EXI":
-            ##EXISTS PROTOCOL##
+    elif conMsg == "PUL":
+        #if PUL is received, send T and close connection
+        peerConn.send("T".encode())
+        peerConn.close()
+        #return
 
-            #receive key
-            key = recvKey(peerConn)
+    elif conMsg == "INF":
+        #uses function in our class to put diagnostic information into a string and send to whoever requested
+        fingerString = myProfile.serialize()
+        sendVal(peerConn, fingerString)
 
-            #if trueOwner returns us, and we can find a file with that keyname, send a T
-            #if we can't find file, send F
-            #if we don't own the space, send N
-            if trueOwner(key) == myProfile.myAddrString():
-                try:
-                    f=open("repo/"+str(key), "rb")
-                    peerConn.send("T".encode())
-                    f.close()
-                except:
-                    peerConn.send("F".encode())
-            else:
-                peerConn.send("N".encode())
-
-        elif conMsg == "REM":
-            ##REMOVE PROTOCOL##
-            while myProfile.locked:
-                pass
-
-            #receive key
-            key = recvKey(peerConn)
-            keyStr = str(key)
-
-            #call true owner on Key and it it is us, proceed
-            #if not, send and N
-            if trueOwner(key) == myProfile.myAddrString():
-                try:
-                    print("Removing file...")
-                    #try to remove data, if something fails, send an F
-                    f=open("repo/"+keyStr, "rb")
-                    os.remove("repo/"+keyStr)
-                    #after attempting to remove, check to see if a path with that name still exists
-                    if not (os.path.exists("repo/"+keyStr)):
-                        peerConn.send("T".encode())
-                except:
-                    peerConn.send("F".encode())
-            else:
-                peerConn.send("N".encode())
-
-        elif conMsg == "PUL":
-            #if PUL is received, send T and close connection
-            peerConn.send("T".encode())
-            peerConn.close()
-            break
-
-        elif conMsg == "INF":
-            #uses function in our class to put diagnostic information into a string and send to whoever requested
-            fingerString = myProfile.serialize()
-            sendVal(peerConn, fingerString)
-
-        elif conMsg == "ABD":
-            successor = myProfile.successor
-            successorIP = successor[0]
-            successorPort = int(successor[1])
-            sendAddress(peerConn, (successorIP, successorPort))
+    elif conMsg == "ABD":
+        successor = myProfile.successor.split(':')
+        print(f"abd successor:{successor}")
+        successorIP = successor[0]
+        successorPort = int(successor[1])
+        sendAddress(peerConn, (successorIP, successorPort))
 
     return
 
@@ -685,7 +700,9 @@ def waitForPeerConnections(listener):
 
     while True:
         peerInfo = listener.accept()
-        threading.Thread(target=handlePeer, args = (peerInfo,), daemon=True).start()
+        t1 = threading.Thread(target=handlePeer, args = (peerInfo,), daemon=True)
+        t1.start()
+        #t1.join() # Join = wait in C
 
 
 
@@ -711,6 +728,10 @@ randKeyRange = random.randint(0, keySpaceRanges)
 # THIS client's profile
 myProfile = ''
 
+# Ensure we have repo folder
+if not path.exists('repo/'):
+    os.mkdir('repo')
+
 # Seed client is len == 1
 if len(sys.argv) == 1:
     ''' Running this file as a seed client for a DHT. '''
@@ -725,7 +746,7 @@ if len(sys.argv) == 1:
 
     # Initializing my peer profile
     myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,addr,addr)
-
+    
     print(menu)
     #waiting for commands
     try:
@@ -764,6 +785,10 @@ if len(sys.argv) == 1:
                 ##DIAGNOSTICS##
                 print(myProfile.serialize()) 
 
+            elif userInput == "8":
+                ##UPDATE PROFILE##
+                myProfile.updateProfile(trueOwner) 
+
             else:
                 ##BOGUS##
                 print("What?")
@@ -796,7 +821,7 @@ elif len(sys.argv) == 3:
     # setting up info for our peer profile
     # adding who we just connected to to our finger table
     myAddress = (getLocalIPAddress(), port)
-    fingerTable[getHashIndex((peerIP, peerPort))] = peerIP + ":" + str(peerPort)
+    fingerTable[getHashIndex((peerIP, peerPort))] = peerIP + ":" + str(peerPort) # add peer
     myAddressString = myAddress[0] + ":" + str(myAddress[1])
     myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,myAddressString,myAddressString)
 
@@ -825,23 +850,25 @@ elif len(sys.argv) == 3:
 
         # Gathering info for our profile
         # Add ourselves to the finger table
-        fingerTable[getHashIndex((getLocalIPAddress(), int(port)))] = myAddressString
+        #fingerTable[getHashIndex((getLocalIPAddress(), int(port)))] = myAddressString
 
         # Finish out rest of connection protocol after we have the ok to continue #
         peerSuccessor1 = recvAddress(peerConn)
+        print("Received sucessor one:",peerSuccessor1)
         # Add who we connected to to our finger table
         fingerTable[getHashIndex(peerSuccessor1)] = peerSuccessor1[0]+":"+str(peerSuccessor1[1])
 
         peerSuccessor2 = recvAddress(peerConn)
+        print("Received sucessor one:",peerSuccessor1)
         # Add who we connected to to our finger table
         fingerTable[getHashIndex(peerSuccessor2)] = peerSuccessor2[0]+":"+str(peerSuccessor2[1])
 
-        if peerSuccessor1 == peerSuccessor2:
-            fingerTable[getHashIndex(peerSuccessor2)] = myAddressString
-            peerSuccessor2 = myAddressString
-
         peerSuccessor1 = peerSuccessor1[0] +":"+ str(peerSuccessor1[1])
         peerSuccessor2 = peerSuccessor2[0] +":"+ str(peerSuccessor2[1])
+
+        # Ensure we are not our own successor
+        if peerSuccessor1[0] == myAddress[0] and peerSuccessor1[1] == myAddress[1]:
+            peerSuccessor1 = peerIP +":"+ str(peerPort)
 
         numItems = recvInt(peerConn)
         if numItems == 0:
@@ -860,6 +887,7 @@ elif len(sys.argv) == 3:
         # End connection protocol #
 
         # Initializing my peer profile
+        fingerTable[getHashIndex((getLocalIPAddress(), port))] = getLocalIPAddress() + ":" + str(port) # add ourselves
         myProfile = PeerProfile((getLocalIPAddress(),int(port)),fingerTable,peerSuccessor1,peerSuccessor2)
 
         #recv all protocol messages from peer we connected to
@@ -898,6 +926,10 @@ elif len(sys.argv) == 3:
                 elif userInput == "7":
                     ##DIAGNOSTICS##
                     print(myProfile.serialize()) 
+
+                elif userInput == "8":
+                    ##UPDATE PROFILE##
+                    myProfile.updateProfile(trueOwner) 
 
                 else:
                     ##BOGUS##
