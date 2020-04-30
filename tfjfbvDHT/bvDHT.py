@@ -562,14 +562,14 @@ def handlePeer(peerInfo):
         while myProfile.locked:
             pass
 
-        fileName = recvKey(peerConn)
+        fileName = recvKey(peerConn) # Integer representation of file name (hash)
 
         successor = myProfile.successor.split(":")
         successorIP = successor[0]
         successorPort = successor[1]
 
-        successorHash = getHashIndex((successorIP, int(successorPort)))
-        myHash = getHashIndex(myProfile.myAddress)
+        successorHash = getHashIndex((successorIP, int(successorPort))) # Not used
+        myHash = getHashIndex(myProfile.myAddress) # Not used
 
         #if we own the space, send positive confirmation
         #else, send N and skip

@@ -27,6 +27,12 @@ class PeerProfile:
         self.myAddress = _myAddr
         self.locked = False
 
+        # Get random number [0, 2**160/5] for finger table populating
+        import random
+        from os import urandom
+        random.seed(a=urandom(4096))
+        self.offset = random.randint(0, (2**160)/5)
+
     def myAddrString(self):
         ''' Return my address in form (string: "ip:port"). '''
 
@@ -46,83 +52,32 @@ class PeerProfile:
         inf += "Successor2: " + self.successorTwo + "\n"
         return inf
 
-
-
-    '''
-        FIX: Originally thought successors were behind us.
-        That is, originally thought successors' hashes were lower than ours.
-        Turns out, they are HIGHER. It's us -> successor1 -> successor2.
-        Can see this because trueOwner(key) searches from HIGH to low looking for owners.
-        In the CON protocol, we ask for the trueOwner of the connecting peer's hash.
-        Therefore, searching HIGH to low means we would own it if it was between
-        us and the next guy at a higher address!
-
-        This current function INCORRECTLY updates the peerProfile.
-        It searches behind us and then two behind us. This completely
-        reverses how the table (circle) NEEDS to be.
-
-        Proposed fixes - check our successor's PULSE.
-        check second successor's PULSE.
-        NOT BEHIND US!!!
-        DO NOT USE
-        DEEMED NOT USEFUL AT THE MOMENT
-    '''
     def updateProfile(self, trueOwner):
         '''
             Updates the finger table of the peer with more recent peers
-            in the DHT. That is, it will update it's successor, successorTwo, and finger
-            table. Finger table is updated by calculating a random offset
+            in the DHT. 
+            Finger table is updated by calculating a random offset
             and calculating five offsets to check. These five offsets will be added to
             the finger table.
 
             Note: the finger table doesn't have to have five distinct peers. One peer could
-            own two of the spots checked.
+            own > 1 of the spots checked.
         '''
 
-        # Check successor one is still active
-        myHash = getHashIndex(self.myAddress)
-        _successor = trueOwner(myHash - 1) # Successor is one behind us
-        print("behind us: [{}]".format(_successor))
-        conn = socket(AF_INET, SOCK_STREAM)
-        connIP = _successor.split(':')[0]
-        connPort = int(_successor.split(':')[1])
+        check_index = 0
+        for i in range(5):
+            # Get who owns at each
+            owner = trueOwner(check_index)
+            print(f"Checking {check_index} and received {owner}")
+            # Add to finger table if the IP is not already in values
+            if owner not in self.fingerTable.values():
+                self.fingerTable[check_index] = owner
 
-        contacted_successor_one = False
-        # Try to connect to them
-        try:
-            conn.connect((connIP, connPort))
-            conn.send('PUL'.encode())
-            res = recvAll(conn, 1)
-            contacted_successor_one = res.decode() == 'T' # Mark we contacted our successor
-            if res.decode() != 'T':
-                print("Did not get back a T from pulse")
-                #raise Exception("Did not get back T from pulse")
-            self.successor = connIP + ':' + str(connPort)
-            conn.close()
-            conn = None
-        except:
-            raise Exception("Could not contact successor")
+            check_index += self.offset
 
-        # Check successor two
-        successorHash = getHashIndex((self.successor.split(':')[0], int(self.successor.split(':')[1]))) # connIP and connPort are our successors IP/port
-        _successor = trueOwner(successorHash - 1) # Successor two is one behind successor 
-        print("behind successor: [{}]".format(_successor))
-        conn = socket(AF_INET, SOCK_STREAM)
-        connIP = _successor.split(':')[0]
-        connPort = int(_successor.split(':')[1])
 
-        contacted_successor_two = False
-        # Try to connect to them
-        try:
-            conn.connect((connIP, connPort))
-            conn.send('PUL'.encode())
-            res = recvAll(conn, 1)
-            contacted_successor_two = res.decode() == 'T' # Mark we contacted our successor
-            if res.decode() != 'T':
-                raise Exception("Did not get back T from pulse")
-            self.successorTwo = connIP + ':' + str(connPort)
-        except:
-            raise Exception("Could not contact successor two")
+
+
 
 
 
