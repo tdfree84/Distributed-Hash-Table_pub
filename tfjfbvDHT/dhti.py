@@ -8,6 +8,14 @@ class DHTInterface:
         DHTInterface is utilized to interact with a DHT
         under the protocol set in Networks and Distributed Systems
         with Dr. Nathan Backman at Buena Vista University in Spring 2019.
+        
+        Initialization:
+        x = DHTInterface(ipport_file='/path/to/file/example.txt')
+            example.txt contains ['IP.IP.IP.IP:PORT']
+        y = DHTInterface(peerIP='123.456.789.101', peerPort=12345)
+        z = DHTInterface()
+        z.peerIP = '987.654.321.000'
+        z.peerPort = 65532
     '''
     def __init__(self, **kwargs):
         self.conn = None
