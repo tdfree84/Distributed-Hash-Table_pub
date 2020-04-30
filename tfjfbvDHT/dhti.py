@@ -16,6 +16,14 @@ class DHTInterface:
         z = DHTInterface()
         z.peerIP = '987.654.321.000'
         z.peerPort = 65532
+        
+        With objects x, y, or z, the user can now call
+        methods in DHTInterface to interact with the DHT.
+        such as
+        x.insert('asdf', 'fdsaasdf')
+        x.get('asdf')
+        x.exists('asdf')
+        print(x.help())
     '''
     def __init__(self, **kwargs):
         self.conn = None
