@@ -8,13 +8,12 @@
 
 #### Prerequisites
 - `sudo apt install git python3-pip`
-- `pip3 install pipenv`
 
 #### Setup
 1. Clone `https://github.com/tdfree84/Distributed-Hash-Table.git`
 2. `cd` into directory
-3. `pipenv install`
-3. `pipenv shell` -> begin development
+3. `pipenv install` <br/><br/>
+To use pytest, a pipenv environment must be started. That is, do `pipenv shell` to be able to execute `pytest tests/`. The main application `tfjfbvDHT/bvDHT.py` only needs `python3` to run. 
 
 #### Running
 * In order for our implementation to work properly, the `peerProfile.py`, `net_functions.py`, `hash_functions.py` files are required
