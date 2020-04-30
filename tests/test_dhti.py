@@ -1,7 +1,7 @@
 import pytest
 from tfjfbvDHT.dhti import *
 
-IPPORTFILENAME = '/home/tyler23/Documents/school/projects_class/Distributed-Hash-Table/tests/IPPORT.txt'
+IPPORTFILENAME = '/path/to/IPPORT.txt'
 
 @pytest.fixture(scope='function')
 def new_dhti():
